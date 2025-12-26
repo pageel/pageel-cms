@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Template columns not syncing with PostList table
 - Stale state in Dashboard save handlers
 - Template settings not persisting to `.pageelrc.json` (BUG-05)
+- Config sync using localStorage fallbacks instead of collection store (BUG-06)
 
 ---
 

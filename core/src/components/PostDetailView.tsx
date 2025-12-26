@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { TrashIcon } from './icons/TrashIcon';
 import { useI18n } from '../i18n/I18nContext';
+import { useCollectionStore } from '../features/collections/store';
 import { DocumentIcon } from './icons/DocumentIcon';
 import { ArrowUturnLeftIcon } from './icons/ArrowUturnLeftIcon';
 import { ClockIcon } from './icons/ClockIcon';
@@ -156,19 +157,16 @@ const PostDetailView: React.FC<PostDetailViewProps> = ({ post, onBack, onDelete,
 
   // Calculate missing fields on mount based on template
   useEffect(() => {
-      const templateJson = localStorage.getItem(`postTemplate_${repo.full_name}`);
-      if (templateJson) {
-          try {
-              const template = JSON.parse(templateJson);
-              const templateKeys = Object.keys(template);
-              const currentKeys = Object.keys(editableFrontmatter);
-              const missing = templateKeys.filter(key => !currentKeys.includes(key));
-              setMissingFields(missing);
-          } catch (e) {
-              console.warn("Error parsing template", e);
-          }
+      const { getActiveCollection } = useCollectionStore.getState();
+      const activeCollection = getActiveCollection();
+      
+      if (activeCollection?.template) {
+          const templateKeys = activeCollection.template.fields.map(f => f.name);
+          const currentKeys = Object.keys(editableFrontmatter);
+          const missing = templateKeys.filter(key => !currentKeys.includes(key));
+          setMissingFields(missing);
       }
-  }, [repo.full_name, editableFrontmatter]); // Re-calc if frontmatter changes (e.g. adding a field)
+  }, [editableFrontmatter]); // Re-calc if frontmatter changes (e.g. adding a field)
 
   // Scroll to top when component mounts
   useEffect(() => {

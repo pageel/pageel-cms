@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { GithubRepo, IGitService } from '../types';
 import { parseMarkdown, extractImageUrls } from '../utils/parsing';
 import { useI18n } from '../i18n/I18nContext';
+import { useCollectionStore } from '../features/collections/store';
 import { SpinnerIcon } from './icons/SpinnerIcon';
 import { CheckCircleIcon } from './icons/CheckCircleIcon';
 import { ExclamationTriangleIcon } from './icons/ExclamationTriangleIcon';
@@ -59,10 +60,17 @@ const PostUploadValidationModal: React.FC<PostUploadValidationModalProps> = ({ f
     try {
       const { frontmatter } = parseMarkdown(markdown);
       
-      const templateJson = localStorage.getItem(`postTemplate_${repo.full_name}`);
+      // Get template from collection store (single source of truth)
+      const { getActiveCollection } = useCollectionStore.getState();
+      const activeCollection = getActiveCollection();
       let template: Record<string, string> | null = null;
-      if (templateJson) {
-          try { template = JSON.parse(templateJson); } catch {}
+      
+      if (activeCollection?.template) {
+          // Convert CollectionTemplate to Record<string, string>
+          template = {};
+          activeCollection.template.fields.forEach(field => {
+              template![field.name] = field.type;
+          });
       }
 
       if (Object.keys(frontmatter).length === 0) {

@@ -223,10 +223,15 @@ const TemplateGenerator: React.FC<TemplateGeneratorProps> = ({ gitService, repo,
         setIsSaving(true);
         setError(null);
         try {
-            // Save to collection store if collectionId provided
-            if (collectionId && activeCollection) {
+            // Get the target collection - either the specified one or the active one
+            const targetCollectionId = collectionId || useCollectionStore.getState().workspace?.activeCollectionId;
+            const targetCollection = targetCollectionId 
+                ? useCollectionStore.getState().workspace?.collections.find(c => c.id === targetCollectionId)
+                : activeCollection;
+
+            if (targetCollectionId && targetCollection) {
                 const collectionTemplate = recordToCollectionTemplate(templateToSave);
-                updateCollection(collectionId, {
+                updateCollection(targetCollectionId, {
                     template: collectionTemplate,
                     tableColumns: selectedColumns,
                     columnWidths: columnWidths,
@@ -234,48 +239,18 @@ const TemplateGenerator: React.FC<TemplateGeneratorProps> = ({ gitService, repo,
                 // Notify parent to sync .pageelrc.json
                 onTemplateSaved?.();
             } else {
-                // Fallback: Save to LocalStorage (repo-wide)
-                localStorage.setItem(templateKey, JSON.stringify(templateToSave));
-                localStorage.setItem(columnsKey, JSON.stringify(selectedColumns));
-                localStorage.setItem(widthsKey, JSON.stringify(columnWidths));
-
-                // Update .pageelrc.json in the repo
-                try {
-                    const rootItems = await gitService.getRepoContents('');
-                    const configItem = rootItems.find(item => item.name === '.pageelrc.json');
-
-                    let config: any = { version: 1 };
-
-                    if (configItem) {
-                        const contentStr = await gitService.getFileContent('.pageelrc.json');
-                        try {
-                            config = JSON.parse(contentStr);
-                        } catch (e) {
-                            console.warn("Existing .pageelrc.json is invalid JSON, overwriting.");
-                        }
-                    }
-
-                    config.templates = { ...config.templates, frontmatter: templateToSave };
-                    config.ui = { ...config.ui, tableColumns: selectedColumns, columnWidths: columnWidths };
-
-                    const newContent = JSON.stringify(config, null, 2);
-
-                    if (configItem) {
-                        await gitService.updateFileContent(
-                            '.pageelrc.json',
-                            newContent,
-                            'chore: update post template settings',
-                            configItem.sha
-                        );
-                    } else {
-                        await gitService.createFileFromString(
-                            '.pageelrc.json',
-                            newContent,
-                            'chore: create pageel-core config'
-                        );
-                    }
-                } catch (remoteError) {
-                    console.warn("Failed to update .pageelrc.json", remoteError);
+                // No collection exists - save to first collection or show error
+                const firstCollection = useCollectionStore.getState().workspace?.collections[0];
+                if (firstCollection) {
+                    const collectionTemplate = recordToCollectionTemplate(templateToSave);
+                    updateCollection(firstCollection.id, {
+                        template: collectionTemplate,
+                        tableColumns: selectedColumns,
+                        columnWidths: columnWidths,
+                    });
+                    onTemplateSaved?.();
+                } else {
+                    console.warn("No collection available to save template to");
                 }
             }
 
