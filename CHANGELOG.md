@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `useSettingsStore` for settings state with localStorage persistence
 - `useAppStore` for navigation and UI state
 - `useAuthStore` for authentication state
+- `useCollectionStore` for multi-collection management
+- `Collection`, `Workspace`, `WorkspaceSettings` interfaces
 - `IAuthProvider` interface for extensibility (database/OAuth auth)
 - `ISettingsProvider` interface for swappable settings storage
 - `useNavigation` hook for view routing with browser history
