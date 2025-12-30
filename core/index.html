@@ -1,126 +1,147 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pageel CMS</title>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pageel Core</title>
+    <!-- SEO & Social Sharing Meta Tags -->
+    <meta
+      name="description"
+      content="A Git-based CMS for managing Markdown/MDX content and images directly on GitHub, Gitea, or Gogs repositories. Built for static & hybrid websites."
+    />
 
-  <!-- SEO & Social Sharing Meta Tags -->
-  <meta name="description"
-    content="A Git-based CMS for managing Markdown/MDX content and images directly on GitHub, Gitea, or Gogs repositories. Built for static & hybrid websites." />
-
-  <!-- Open Graph / Facebook -->
-  <meta property="og:type" content="website" />
-  <meta property="og:title" content="Pageel Core" />
-  <meta property="og:description"
-    content="A Git-based CMS for managing Markdown/MDX content and images directly on GitHub, Gitea, or Gogs repositories. Built for static & hybrid websites." />
-  <!-- og:image will be added after screenshot is available
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Pageel CMS" />
+    <meta
+      property="og:description"
+      content="A Git-based CMS for managing Markdown/MDX content and images directly on GitHub, Gitea, or Gogs repositories. Built for static & hybrid websites."
+    />
+    <!-- og:image will be added after screenshot is available
   <meta property="og:image"
     content="https://raw.githubusercontent.com/pageel/pageel-core/main/.github/assets/app-preview.png" />
   -->
 
-  <!-- Twitter -->
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Pageel Core" />
-  <meta name="twitter:description"
-    content="A Git-based CMS for managing Markdown/MDX content and images directly on GitHub, Gitea, or Gogs repositories. Built for static & hybrid websites." />
-  <!-- twitter:image will be added after screenshot is available
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Pageel CMS" />
+    <meta
+      name="twitter:description"
+      content="A Git-based CMS for managing Markdown/MDX content and images directly on GitHub, Gitea, or Gogs repositories. Built for static & hybrid websites."
+    />
+    <!-- twitter:image will be added after screenshot is available
   <meta name="twitter:image"
     content="https://raw.githubusercontent.com/pageel/pageel-core/main/.github/assets/app-preview.png" />
   -->
 
-  <link rel="icon"
-    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📄</text></svg>">
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23FF5D01'%3E%3Cpath d='M9.315 7.584C12.195 3.883 16.695 1.5 21.75 1.5a.75.75 0 01.75.75c0 5.056-2.383 9.555-6.084 12.436-1.228 1.65-2.82 3.043-4.66 4.102l-1.554.894a.75.75 0 01-1.077-.925l1.625-3.525-3.525 1.625a.75.75 0 01-.925-1.077l.894-1.554c1.059-1.84 2.453-3.432 4.102-4.66zm-5.12 11.232a.75.75 0 00-.75.75v3a.75.75 0 00.75.75h3a.75.75 0 00.75-.75v-3a.75.75 0 00-.75-.75h-3z'/%3E%3C/svg%3E"
+    />
 
-  <!-- Fonts: Inter for UI -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Fonts: Inter for UI -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
 
-  <!-- Tailwind CSS with Typography Plugin -->
-  <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+    <!-- Tailwind CSS with Typography Plugin -->
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: [
+                "Inter",
+                "ui-sans-serif",
+                "system-ui",
+                "-apple-system",
+                "BlinkMacSystemFont",
+                "Segoe UI",
+                "Roboto",
+                "Helvetica Neue",
+                "Arial",
+                "sans-serif",
+              ],
+            },
+            colors: {
+              notion: {
+                bg: "#FFFFFF",
+                sidebar: "#F7F7F5", // Notion sidebar gray
+                hover: "#EFEFEF", // Notion hover gray
+                text: "#37352F", // Notion primary text
+                muted: "#787774", // Notion secondary text
+                border: "#E9E9E7", // Notion border
+                select: "#E3E2E0", // Notion selection
+                blue: "#2383E2", // Notion blue (links/buttons)
+              },
+            },
           },
-          colors: {
-            notion: {
-              bg: '#FFFFFF',
-              sidebar: '#F7F7F5', // Notion sidebar gray
-              hover: '#EFEFEF',   // Notion hover gray
-              text: '#37352F',    // Notion primary text
-              muted: '#787774',   // Notion secondary text
-              border: '#E9E9E7',  // Notion border
-              select: '#E3E2E0',  // Notion selection
-              blue: '#2383E2',    // Notion blue (links/buttons)
-            }
-          }
+        },
+      };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "react": "https://aistudiocdn.com/react@^19.2.0",
+          "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+          "react/": "https://aistudiocdn.com/react@^19.2.0/"
         }
       }
-    }
-  </script>
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
-  <script type="importmap">
-{
-  "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/"
-  }
-}
-</script>
-  <style>
-    body {
-      background-color: #FFFFFF;
-      color: #37352F;
-    }
+    </script>
+    <style>
+      body {
+        background-color: #ffffff;
+        color: #37352f;
+      }
 
-    body.login-bg {
-      background-color: #F7F7F5;
-    }
+      body.login-bg {
+        background-color: #f7f7f5;
+      }
 
-    /* Scrollbar styling to be more subtle like Notion */
-    ::-webkit-scrollbar {
-      width: 10px;
-      height: 10px;
-    }
+      /* Scrollbar styling to be more subtle like Notion */
+      ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
 
-    ::-webkit-scrollbar-track {
-      background: transparent;
-    }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
 
-    ::-webkit-scrollbar-thumb {
-      background: #D3D1CB;
-      border-radius: 5px;
-      border: 2px solid transparent;
-      background-clip: content-box;
-    }
+      ::-webkit-scrollbar-thumb {
+        background: #d3d1cb;
+        border-radius: 5px;
+        border: 2px solid transparent;
+        background-clip: content-box;
+      }
 
-    ::-webkit-scrollbar-thumb:hover {
-      background: #A09F9B;
-      border: 2px solid transparent;
-      background-clip: content-box;
-    }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #a09f9b;
+        border: 2px solid transparent;
+        background-clip: content-box;
+      }
 
-    /* Markdown Preview Overrides */
-    .markdown-preview {
-      font-family: 'Inter', sans-serif;
-      color: #37352F;
-    }
-  </style>
-  <link rel="stylesheet" href="/index.css">
-</head>
+      /* Markdown Preview Overrides */
+      .markdown-preview {
+        font-family: "Inter", sans-serif;
+        color: #37352f;
+      }
+    </style>
+    <link rel="stylesheet" href="/index.css" />
+  </head>
 
-<body>
-  <div id="root"></div>
-  <script type="module" src="/src/index.tsx"></script>
-</body>
-
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/index.tsx"></script>
+  </body>
 </html>
