@@ -165,11 +165,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </div>
 
                 {/* Version footer - Changed to Link */}
-                <a href="https://github.com/pageel/pageel-core" target="_blank" rel="noopener noreferrer" className="px-3 py-2 border-t border-notion-border text-xs text-notion-muted flex items-center opacity-60 hover:opacity-100 transition-opacity no-underline hover:bg-notion-hover cursor-pointer">
+                <a href="https://github.com/pageel/pageel-cms" target="_blank" rel="noopener noreferrer" className="px-3 py-2 border-t border-notion-border text-xs text-notion-muted flex items-center opacity-60 hover:opacity-100 transition-opacity no-underline hover:bg-notion-hover cursor-pointer">
                     <div className="w-5 h-5 bg-white border border-gray-200 shadow-sm rounded flex items-center justify-center mr-1.5">
                         <GithubIcon className="w-3.5 h-3.5 text-notion-text" />
                     </div>
-                    <span>Pageel Core v1.0.0</span>
+                    <span>Pageel CMS v1.0.0</span>
                 </a>
             </div>
         </aside>

@@ -276,11 +276,11 @@ const App: React.FC = () => {
 
           <footer className="absolute bottom-4 left-0 right-0 text-center text-gray-400 text-xs">
             <div className="flex flex-col sm:flex-row justify-center items-center space-y-2 sm:space-y-0 sm:space-x-4">
-              <a href="https://github.com/pageel/pageel-core" target="_blank" rel="noopener noreferrer" className="inline-flex items-center hover:text-notion-text transition-colors group">
+              <a href="https://github.com/pageel/pageel-cms" target="_blank" rel="noopener noreferrer" className="inline-flex items-center hover:text-notion-text transition-colors group">
                 <div className="w-5 h-5 bg-white border border-gray-200 shadow-sm rounded flex items-center justify-center mr-2 group-hover:bg-gray-50 transition-colors">
                   <GithubIcon className="w-3.5 h-3.5 text-notion-text" />
                 </div>
-                Pageel Core v1.0.0
+                Pageel CMS v1.0.0
               </a>
               <span className="hidden sm:inline text-gray-300">|</span>
               <LanguageSwitcher position="up" />

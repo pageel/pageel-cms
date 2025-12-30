@@ -19,7 +19,7 @@ export const translations = {
       }
     },
     githubConnect: {
-      title: 'Pageel Core',
+      title: 'Pageel CMS',
       subtitle: 'Connect to your repository to start managing content.',
       serviceTypeLabel: 'Service Type',
       serviceTypeGithub: 'GitHub',
@@ -576,7 +576,7 @@ export const translations = {
       }
     },
     githubConnect: {
-      title: 'Pageel Core',
+      title: 'Pageel CMS',
       subtitle: 'Kết nối với kho chứa của bạn để bắt đầu quản lý nội dung.',
       serviceTypeLabel: 'Loại Dịch vụ',
       serviceTypeGithub: 'GitHub',
