@@ -25,6 +25,7 @@ A powerful, client-side Content Management System (CMS) for managing Markdown/MD
 
 | Feature                       | Description                                                           |
 | :---------------------------- | :-------------------------------------------------------------------- |
+| 📚 **Multi-Collection**       | Manage multiple content types (Blog, Docs, Projects) in one workspace |
 | 🔐 **No Backend Required**    | Runs entirely in your browser, communicates directly with Git APIs    |
 | 🔒 **Client-Side Encryption** | PAT encrypted with Web Crypto API (AES-GCM), stored in sessionStorage |
 | 🌍 **Multi-Platform Support** | GitHub, Gitea, and Gogs (self-hosted)                                 |
