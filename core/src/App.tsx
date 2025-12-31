@@ -283,7 +283,7 @@ const App: React.FC = () => {
                 <div className="w-5 h-5 bg-white border border-gray-200 shadow-sm rounded flex items-center justify-center mr-2 group-hover:bg-gray-50 transition-colors">
                   <GithubIcon className="w-3.5 h-3.5 text-notion-text" />
                 </div>
-                Pageel CMS v1.0.0
+                Pageel CMS v1.1.0-beta.1
               </a>
               <span className="hidden sm:inline text-gray-300">|</span>
               <LanguageSwitcher position="up" />

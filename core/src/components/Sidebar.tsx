@@ -169,7 +169,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <div className="w-5 h-5 bg-white border border-gray-200 shadow-sm rounded flex items-center justify-center mr-1.5">
                         <GithubIcon className="w-3.5 h-3.5 text-notion-text" />
                     </div>
-                    <span>Pageel CMS v1.0.0</span>
+                    <span>Pageel CMS v1.1.0-beta.1</span>
                 </a>
             </div>
         </aside>
