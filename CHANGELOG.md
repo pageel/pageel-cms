@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Initial Scan Refactor** (MA-08): Granular progress bar UI (0-100%) and phased scanning logic in Setup Wizard.
+- **Strict Sync Locking** (WF-06): Prevents concurrent Git operations with global locking and UI status banner.
+- **Setup Wizard Enhancement**: Added initial collection naming field and fixed persistence race conditions.
+
+### Fixed
+
+- **Config Import** (BUG-14): Fixed configuration import not saving to repository and added sync progress feedback.
+- **Config Export** (BUG-15): Fixed incomplete exports by standardizing on V2 schema and including all workspace data.
+- **Comprehensive Reset** (BUG-13): Reset now clears all repo-scoped localStorage, Zustand states, and forces setup re-trigger.
+- **Default Domain Fallback** (BUG-10): Added UI guidance for empty production domain behavior.
+- Fixed version detection in config import to correctly identify and process V2 configurations.
+
+### Removed
+
+- Deprecated `scripts/` directory in favor of workspace-level workflows.
+
+---
+
 ## [1.1.0-beta.1] - 2025-12-31
 
 ### Added
