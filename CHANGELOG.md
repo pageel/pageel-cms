@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Initial Scan Refactor** (MA-08): Granular progress bar UI (0-100%) and phased scanning logic in Setup Wizard.
 - **Strict Sync Locking** (WF-06): Prevents concurrent Git operations with global locking and UI status banner.
 - **Setup Wizard Enhancement**: Added initial collection naming field and fixed persistence race conditions.
+- **Logout UX Simplification** (MA-07): Streamlined logout flow by removing unnecessary confirmation checkboxes.
+
+### Changed
+
+- **Tailwind CSS v4 Migration**: Migrated from CDN-based Tailwind to build-time PostCSS setup for production readiness and better performance.
 
 ### Fixed
 
@@ -21,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Config Export** (BUG-15): Fixed incomplete exports by standardizing on V2 schema and including all workspace data.
 - **Comprehensive Reset** (BUG-13): Reset now clears all repo-scoped localStorage, Zustand states, and forces setup re-trigger.
 - **Default Domain Fallback** (BUG-10): Added UI guidance for empty production domain behavior.
+- **Tailwind CDN Fix** (BUG-16): Resolved production warnings and fixed 404 for missing CSS files.
 - Fixed version detection in config import to correctly identify and process V2 configurations.
 
 ### Removed

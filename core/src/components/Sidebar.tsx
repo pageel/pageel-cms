@@ -21,7 +21,6 @@ interface SidebarProps {
     user: GithubUser;
     serviceType: ServiceType;
     onLogout: () => void;
-    onResetAndLogout: () => void;
     isSynced: boolean;
     repoStats: { postCount: number | null, imageCount: number | null };
     lastUpdated: string;

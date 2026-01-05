@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "sans-serif";
+
+  --color-notion-bg: #FFFFFF;
+  --color-notion-sidebar: #F7F7F5;
+  --color-notion-hover: #EFEFEF;
+  --color-notion-text: #37352F;
+  --color-notion-muted: #787774;
+  --color-notion-border: #E9E9E7;
+  --color-notion-select: #E3E2E0;
+  --color-notion-blue: #2383E2;
+}
+
+/* @tailwindcss/typography plugin is automatically handled in v4 if detected or via @plugin */
+@plugin "@tailwindcss/typography";
+
+body {
+  background-color: #FFFFFF;
+  color: #37352F;
+}
+
+body.login-bg {
+  background-color: #F7F7F5;
+}
+
+button, 
+[role="button"],
+a {
+  cursor: pointer;
+}
+
+/* Scrollbar styling to be more subtle like Notion */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D3D1CB;
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #A09F9B;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+/* Markdown Preview Overrides */
+.markdown-preview {
+  font-family: 'Inter', sans-serif;
+  color: #37352F;
+}

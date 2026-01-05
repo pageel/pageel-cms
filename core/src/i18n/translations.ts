@@ -5,9 +5,7 @@ export const translations = {
       logout: 'Log Out',
       logoutConfirm: {
         title: 'Confirm Logout',
-        description: 'Are you sure you want to end your session?',
-        resetLabel: 'Also delete all saved settings',
-        resetHelp: 'This will remove all saved paths, templates, and commit settings from your browser. This action cannot be undone.',
+        description: 'Are you sure you want to log out? Your session will end and you will need to reconnect.',
         cancel: 'Cancel',
       },
       error: {
@@ -562,9 +560,7 @@ export const translations = {
       logout: 'Đăng Xuất',
       logoutConfirm: {
         title: 'Xác nhận Đăng xuất',
-        description: 'Bạn có chắc chắn muốn kết thúc phiên làm việc không?',
-        resetLabel: 'Đồng thời xóa tất cả cài đặt đã lưu',
-        resetHelp: 'Thao tác này sẽ xóa tất cả các đường dẫn, mẫu, và cài đặt commit đã lưu khỏi trình duyệt của bạn. Hành động này không thể hoàn tác.',
+        description: 'Bạn có chắc chắn muốn đăng xuất? Phiên làm việc sẽ kết thúc và bạn cần kết nối lại.',
         cancel: 'Hủy',
       },
       error: {

@@ -32,10 +32,9 @@ interface DashboardProps {
     user: GithubUser;
     serviceType: ServiceType;
     onLogout: () => void;
-    onResetAndLogout: () => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ gitService, repo, user, serviceType, onLogout, onResetAndLogout }) => {
+const Dashboard: React.FC<DashboardProps> = ({ gitService, repo, user, serviceType, onLogout }) => {
     // Use Zustand stores for global state
     const { activeView, setView, isSidebarOpen, setSidebarOpen, toggleSidebar, isScanning, setScanning, repoStats, setRepoStats, isSyncing, startSync, endSync, scanPhase, scanProgress, setScanPhase } = useAppStore();
     const { settings, setSettings, isSaving, setIsSaving, saveSuccess, setSaveSuccess, isSetupComplete, setSetupComplete } = useSettingsStore();

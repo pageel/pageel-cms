@@ -26,7 +26,6 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [isLogoutConfirmVisible, setIsLogoutConfirmVisible] = useState(false);
-  const [shouldResetOnLogout, setShouldResetOnLogout] = useState(false);
   const { t } = useI18n();
 
   const performSimpleLogout = useCallback(() => {
@@ -51,8 +50,7 @@ const App: React.FC = () => {
     return () => window.removeEventListener('auth-error', handleAuthError);
   }, [performSimpleLogout]);
 
-  const handleRequestLogout = (withReset: boolean) => {
-    setShouldResetOnLogout(withReset);
+  const handleRequestLogout = () => {
     setIsLogoutConfirmVisible(true);
   };
 
@@ -61,26 +59,11 @@ const App: React.FC = () => {
   };
 
   const handleConfirmLogout = useCallback(() => {
-    if (shouldResetOnLogout && selectedRepo) {
-      const repoFullName = selectedRepo.full_name;
-      // MA-06: ALL settings keys are now scoped by repoId (except language)
-      const repoScopedKeys = [
-        'projectType', 'postsPath', 'imagesPath', 'domainUrl', 'postTemplate',
-        'postTableColumns', 'postTableColumnWidths',
-        'postFileTypes', 'imageFileTypes', 'publishDateSource', 'imageCompressionEnabled',
-        'maxImageSize', 'imageResizeMaxWidth', 'newPostCommit', 'updatePostCommit',
-        'newImageCommit', 'updateImageCommit'
-      ];
-      repoScopedKeys.forEach(key => localStorage.removeItem(`${key}_${repoFullName}`));
-      // Language is user preference, optionally reset
-      localStorage.removeItem('pageel-cms-lang');
-    }
-
     performSimpleLogout();
     setIsLogoutConfirmVisible(false);
     // Force a full reload to completely clear all in-memory states (Zustand stores, etc.)
     window.location.href = window.location.origin;
-  }, [selectedRepo, shouldResetOnLogout, performSimpleLogout]);
+  }, [performSimpleLogout]);
 
   useEffect(() => {
     const encryptedToken = localStorage.getItem('github_pat_encrypted');
@@ -238,25 +221,8 @@ const App: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-notion-text leading-5">{t('app.logoutConfirm.title')}</h3>
-                  <div className="mt-1 mb-4">
+                  <div className="mt-1">
                     <p className="text-xs text-notion-muted leading-relaxed">{t('app.logoutConfirm.description')}</p>
-                  </div>
-
-                  <div className="flex items-start bg-notion-sidebar p-3 rounded-sm border border-notion-border">
-                    <div className="flex items-center h-5">
-                      <input
-                        id="reset-settings-checkbox"
-                        name="reset-settings"
-                        type="checkbox"
-                        checked={shouldResetOnLogout}
-                        onChange={(e) => setShouldResetOnLogout(e.target.checked)}
-                        className="rounded-sm border-gray-300 text-red-600 focus:ring-red-500 h-3.5 w-3.5"
-                      />
-                    </div>
-                    <div className="ml-2.5">
-                      <label htmlFor="reset-settings-checkbox" className="text-xs font-medium text-notion-text block select-none">{t('app.logoutConfirm.resetLabel')}</label>
-                      <p className="text-[10px] text-notion-muted mt-0.5 leading-tight">{t('app.logoutConfirm.resetHelp')}</p>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -296,8 +262,7 @@ const App: React.FC = () => {
           repo={selectedRepo}
           user={user}
           serviceType={serviceType}
-          onLogout={() => handleRequestLogout(false)}
-          onResetAndLogout={() => handleRequestLogout(true)}
+          onLogout={handleRequestLogout}
         />
       )}
     </div>
