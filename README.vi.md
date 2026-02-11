@@ -99,7 +99,7 @@ Thư viện media chuyên dụng.
 
 ```bash
 git clone https://github.com/pageel/pageel-cms.git
-cd pageel-cms
+cd pageel-cms/core
 npm install
 ```
 

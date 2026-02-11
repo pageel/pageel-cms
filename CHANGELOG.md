@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Default Domain Fallback** (BUG-10): Added UI guidance for empty production domain behavior.
 - **Tailwind CDN Fix** (BUG-16): Resolved production warnings and fixed 404 for missing CSS files.
 - Fixed version detection in config import to correctly identify and process V2 configurations.
+- **Documentation Fix**: Corrected installation instructions in README.md/README.vi.md to point to `core/` directory.
 
 ### Removed
 

@@ -99,7 +99,7 @@ Define and validate content structure.
 
 ```bash
 git clone https://github.com/pageel/pageel-cms.git
-cd pageel-cms
+cd pageel-cms/core
 npm install
 ```
 
