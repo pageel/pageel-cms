@@ -106,6 +106,8 @@ export const parseRepoUrl = (url: string): { owner: string; repo: string } | nul
 }
 
 export const inferFrontmatterType = (value: any): string => {
+    if (typeof value === 'boolean') return 'boolean';
+    if (typeof value === 'number') return 'number';
     if (Array.isArray(value)) return 'array';
     if (value instanceof Date) return 'date'; 
     if (typeof value === 'object' && value !== null) return 'object';

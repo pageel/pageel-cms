@@ -17,6 +17,7 @@ import PostImageSelectionModal from './PostImageSelectionModal';
 import { ConfirmationModal } from './ConfirmationModal';
 import { useCollectionStore } from '../features/collections/store';
 import { resolveImageSource } from '../utils/github';
+import FilterBar, { matchesFilter, FilterValue } from './FilterBar';
 
 interface PostListProps {
   gitService: IGitService;
@@ -36,7 +37,7 @@ interface PostListProps {
   onAction: () => void;
 }
 
-type SortOption = 'date-desc' | 'date-asc' | 'title-asc' | 'title-desc';
+type SortOption = string; // e.g. 'date-desc', 'title-asc', or '{field}-asc'/'{field}-desc'
 
 interface PostData {
   frontmatter: Record<string, any>;
@@ -131,6 +132,10 @@ const PostList: React.FC<PostListProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const POSTS_PER_PAGE = 20;
 
+  // WF-08: Filter state
+  const [activeFilters, setActiveFilters] = useState<Record<string, FilterValue>>({});
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+
   const [selectedPost, setSelectedPost] = useState<PostData | null>(null);
   const [postToDelete, setPostToDelete] = useState<PostData | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -152,6 +157,7 @@ const PostList: React.FC<PostListProps> = ({
   // Columns Configuration
   const { getActiveCollection } = useCollectionStore();
   const activeCollection = getActiveCollection();
+  const activeTemplate = activeCollection?.template || null;
   const [visibleFields, setVisibleFields] = useState<string[]>([]);
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>({ '__name__': 35 });
 
@@ -241,8 +247,68 @@ const PostList: React.FC<PostListProps> = ({
     fetchPosts();
   }, [path, gitService]);
 
+  // WF-08: Filter handlers
+  const handleFilterChange = (field: string, filter: FilterValue | null) => {
+    setActiveFilters(prev => {
+      const next = { ...prev };
+      if (filter === null) {
+        delete next[field];
+      } else {
+        next[field] = filter;
+      }
+      return next;
+    });
+    setCurrentPage(1);
+  };
+
+  const handleClearFilters = () => {
+    setActiveFilters({});
+    setCurrentPage(1);
+  };
+
+  // WF-08: Column header sort handler
+  const handleColumnSort = (field: string) => {
+    if (sortOption === `${field}-asc`) {
+      setSortOption(`${field}-desc`);
+    } else {
+      setSortOption(`${field}-asc`);
+    }
+  };
+
+  // WF-08: Get sort indicator for column header
+  const getSortIndicator = (field: string): string | null => {
+    if (sortOption === `${field}-asc`) return '▲';
+    if (sortOption === `${field}-desc`) return '▼';
+    return null;
+  };
+
+  // WF-08: Build dynamic sort options from template
+  const dynamicSortOptions = useMemo(() => {
+    const baseOptions = [
+      { value: 'date-desc', label: 'Date (Newest)' },
+      { value: 'date-asc', label: 'Date (Oldest)' },
+      { value: 'title-asc', label: 'Title (A-Z)' },
+      { value: 'title-desc', label: 'Title (Z-A)' },
+    ];
+    if (activeTemplate?.fields) {
+      const extraFields = activeTemplate.fields.filter(
+        f => !['title', 'image', 'cover', 'thumbnail', 'heroImage'].includes(f.name) &&
+             f.type !== 'object' && f.type !== 'array'
+      );
+      extraFields.forEach(f => {
+        baseOptions.push(
+          { value: `${f.name}-asc`, label: `${f.name} (A→Z)` },
+          { value: `${f.name}-desc`, label: `${f.name} (Z→A)` },
+        );
+      });
+    }
+    return baseOptions;
+  }, [activeTemplate]);
+
   const filteredPosts = useMemo(() => {
       let result = posts;
+
+      // Text search
       if (searchQuery) {
           const q = searchQuery.toLowerCase();
           result = result.filter(p => 
@@ -251,8 +317,14 @@ const PostList: React.FC<PostListProps> = ({
               (p.frontmatter.author && String(p.frontmatter.author).toLowerCase().includes(q))
           );
       }
+
+      // WF-08: Apply template-based filters
+      for (const [field, filter] of Object.entries(activeFilters) as [string, FilterValue][]) {
+        result = result.filter(post => matchesFilter(post.frontmatter[field], filter));
+      }
       
-      result.sort((a, b) => {
+      // Sort logic (supports dynamic field-based sorting)
+      result = [...result].sort((a, b) => {
           const dateA = new Date(a.frontmatter.date || a.frontmatter.publishDate || 0).getTime();
           const dateB = new Date(b.frontmatter.date || b.frontmatter.publishDate || 0).getTime();
           const titleA = (a.frontmatter.title || a.name).toLowerCase();
@@ -262,11 +334,29 @@ const PostList: React.FC<PostListProps> = ({
           if (sortOption === 'date-asc') return dateA - dateB;
           if (sortOption === 'title-asc') return titleA.localeCompare(titleB);
           if (sortOption === 'title-desc') return titleB.localeCompare(titleA);
+
+          // WF-08: Dynamic field sorting
+          const match = sortOption.match(/^(.+)-(asc|desc)$/);
+          if (match) {
+            const [, field, direction] = match;
+            const valA = a.frontmatter[field];
+            const valB = b.frontmatter[field];
+            let cmp = 0;
+            if (valA === undefined || valA === null) cmp = 1;
+            else if (valB === undefined || valB === null) cmp = -1;
+            else if (typeof valA === 'number' && typeof valB === 'number') cmp = valA - valB;
+            else if (valA instanceof Date || (typeof valA === 'string' && !isNaN(Date.parse(String(valA))))) {
+              cmp = new Date(valA).getTime() - new Date(valB).getTime();
+            } else {
+              cmp = String(valA).localeCompare(String(valB));
+            }
+            return direction === 'desc' ? -cmp : cmp;
+          }
           return 0;
       });
 
       return result;
-  }, [posts, searchQuery, sortOption]);
+  }, [posts, searchQuery, sortOption, activeFilters]);
 
   const totalPages = Math.ceil(filteredPosts.length / POSTS_PER_PAGE);
   const currentPosts = filteredPosts.slice((currentPage - 1) * POSTS_PER_PAGE, currentPage * POSTS_PER_PAGE);
@@ -538,17 +628,38 @@ const PostList: React.FC<PostListProps> = ({
         </div>
         
         <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-            {/* Sort Dropdown */}
+            {/* WF-08: Filter toggle */}
+            {activeTemplate && (
+              <button
+                onClick={() => setIsFilterOpen(prev => !prev)}
+                className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-sm border transition-colors shadow-sm ${
+                  isFilterOpen || Object.keys(activeFilters).length > 0
+                    ? 'bg-notion-blue text-white border-notion-blue'
+                    : 'bg-white text-notion-text border-notion-border hover:bg-gray-50'
+                }`}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+                Filter
+                {Object.keys(activeFilters).length > 0 && (
+                  <span className="text-[10px] font-bold bg-white/20 rounded-full px-1.5">
+                    {Object.keys(activeFilters).length}
+                  </span>
+                )}
+              </button>
+            )}
+
+            {/* Sort Dropdown (WF-08: dynamic options from template) */}
             <div className="relative">
                 <select 
                     value={sortOption}
                     onChange={(e) => setSortOption(e.target.value as SortOption)}
                     className="appearance-none pl-3 pr-8 py-1.5 bg-white border border-notion-border rounded-sm text-xs font-medium text-notion-text focus:outline-none focus:ring-1 focus:ring-notion-blue shadow-sm cursor-pointer hover:bg-gray-50"
                 >
-                    <option value="date-desc">Date (Newest)</option>
-                    <option value="date-asc">Date (Oldest)</option>
-                    <option value="title-asc">Title (A-Z)</option>
-                    <option value="title-desc">Title (Z-A)</option>
+                    {dynamicSortOptions.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-notion-muted">
                     <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -581,6 +692,17 @@ const PostList: React.FC<PostListProps> = ({
             </button>
         </div>
       </div>
+
+      {/* WF-08: FilterBar */}
+      {isFilterOpen && activeTemplate && (
+        <FilterBar
+          template={activeTemplate}
+          posts={posts}
+          activeFilters={activeFilters}
+          onFilterChange={handleFilterChange}
+          onClearFilters={handleClearFilters}
+        />
+      )}
 
       {isLoading ? (
           <div className="flex justify-center items-center h-64">
@@ -648,12 +770,25 @@ const PostList: React.FC<PostListProps> = ({
                           </colgroup>
                           <thead className="bg-notion-sidebar text-notion-muted font-semibold">
                               <tr>
-                                  <th className="px-4 py-2 text-left text-xs font-normal border-r border-notion-border uppercase tracking-wide select-none truncate">
-                                    Name
+                                  <th
+                                    className="px-4 py-2 text-left text-xs font-normal border-r border-notion-border uppercase tracking-wide select-none truncate cursor-pointer hover:bg-gray-100 transition-colors"
+                                    onClick={() => handleColumnSort('title')}
+                                  >
+                                    <span className="flex items-center gap-1">
+                                      Name
+                                      {getSortIndicator('title') && <span className="text-notion-blue text-[10px]">{getSortIndicator('title')}</span>}
+                                    </span>
                                   </th>
                                   {visibleFields.map(field => (
-                                      <th key={field} className="px-4 py-2 text-left text-xs font-normal border-r border-notion-border uppercase tracking-wide select-none truncate">
+                                      <th
+                                        key={field}
+                                        className="px-4 py-2 text-left text-xs font-normal border-r border-notion-border uppercase tracking-wide select-none truncate cursor-pointer hover:bg-gray-100 transition-colors"
+                                        onClick={() => handleColumnSort(field)}
+                                      >
+                                        <span className="flex items-center gap-1">
                                           {field}
+                                          {getSortIndicator(field) && <span className="text-notion-blue text-[10px]">{getSortIndicator(field)}</span>}
+                                        </span>
                                       </th>
                                   ))}
                                   <th className="px-4 py-2 w-10"></th>

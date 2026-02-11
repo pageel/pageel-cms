@@ -36,6 +36,9 @@ const defaultTemplate: Record<string, string> = {
 
 const MAX_COLUMNS = 5;
 
+// Available field types for template editing
+const AVAILABLE_TYPES = ['string', 'date', 'array', 'boolean', 'number', 'object'] as const;
+
 // Default widths in percentage
 const DEFAULT_WIDTHS: Record<string, number> = {
     '__name__': 35, // Special key for Name column
@@ -309,11 +312,22 @@ const TemplateGenerator: React.FC<TemplateGeneratorProps> = ({ gitService, repo,
         }));
     };
 
+    // WF-08: Handle type change for a template field
+    const handleTypeChange = (field: string, newType: string) => {
+        if (parsedTemplate) {
+            setParsedTemplate(prev => prev ? { ...prev, [field]: newType } : prev);
+        } else if (currentTemplate) {
+            setCurrentTemplate(prev => prev ? { ...prev, [field]: newType } : prev);
+        }
+    };
+
     const renderTypePill = (type: string) => {
         const typeStyles: Record<string, string> = {
             'string': 'bg-blue-50 text-blue-700 border-blue-100',
             'date': 'bg-orange-50 text-orange-700 border-orange-100',
             'array': 'bg-purple-50 text-purple-700 border-purple-100',
+            'boolean': 'bg-green-50 text-green-700 border-green-100',
+            'number': 'bg-teal-50 text-teal-700 border-teal-100',
             'object': 'bg-gray-100 text-gray-700 border-gray-200',
             'default': 'bg-gray-50 text-gray-600 border-gray-200'
         };
@@ -358,7 +372,19 @@ const TemplateGenerator: React.FC<TemplateGeneratorProps> = ({ gitService, repo,
                                         {key}
                                     </td>
                                     <td className="px-5 py-2">
-                                        {renderTypePill(type)}
+                                        <div className="flex items-center gap-2">
+                                            {renderTypePill(type)}
+                                            <select
+                                                value={type}
+                                                onChange={(e) => handleTypeChange(key, e.target.value)}
+                                                className="text-xs bg-transparent border border-transparent hover:border-notion-border focus:border-notion-blue rounded-sm px-1 py-0.5 cursor-pointer focus:outline-none focus:ring-1 focus:ring-notion-blue transition-colors appearance-none"
+                                                title={`Change type for ${key}`}
+                                            >
+                                                {AVAILABLE_TYPES.map(t => (
+                                                    <option key={t} value={t}>{t}</option>
+                                                ))}
+                                            </select>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
