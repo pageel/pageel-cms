@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Strict Sync Locking** (WF-06): Prevents concurrent Git operations with global locking and UI status banner.
 - **Setup Wizard Enhancement**: Added initial collection naming field and fixed persistence race conditions.
 - **Logout UX Simplification** (MA-07): Streamlined logout flow by removing unnecessary confirmation checkboxes.
+- **Advanced Filtering System** (WF-08):
+  - **Typed Templates**: Editable field types (String, Date, Boolean, Number, Array, Object) in Template Generator.
+  - **Smart Filter Bar**: Dynamic filter UI based on template types (Dropdown, Date Range, Tag Chips, toggle).
+  - **Dynamic Sorting**: Sort by any template field with clickable column headers.
+- **Documentation Overhaul**: Professional README.md with badges/screenshots and new Vietnamese translation (README.vi.md).
 
 ### Changed
 
@@ -87,34 +92,29 @@ First public release of Pageel CMS - a Git-based CMS for static & hybrid website
 #### Features
 
 - **Posts Management**
-
   - Table and grid view modes
   - Inline frontmatter editing
   - Split-pane Markdown editor with live preview
   - SHA validation for file integrity
 
 - **Media Management**
-
   - Gallery view with lazy-loaded thumbnails
   - Bulk upload with drag & drop
   - Client-side image compression
   - Lightbox preview with zoom
 
 - **Template Generator**
-
   - Auto-generate validation schema from existing posts
   - Define frontmatter field types
   - Configure table columns
   - Export blank templates
 
 - **Post Workflow**
-
   - 3-step wizard (Assets → Content → Publish)
   - Smart image path detection
   - Automatic frontmatter validation
 
 - **Backup & Export**
-
   - ZIP archive of posts/images directories
   - Export `.pageelrc.json` configuration
 
