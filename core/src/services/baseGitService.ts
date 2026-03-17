@@ -24,6 +24,7 @@ export abstract class BaseGitService implements IGitService {
     abstract getFileAsBlob(path: string): Promise<Blob>;
     abstract getRepoTree(path?: string): Promise<RepoTreeInfo[]>;
     abstract getRepoDetails(): Promise<RepoInfo>;
+    abstract getFileSha(path: string): Promise<string | null>;
     
     // --- Shared Implementations ---
 

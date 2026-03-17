@@ -1,205 +1,45 @@
+/**
+ * App Component
+ * 
+ * TD-01/TD-02: Refactored from 273 lines to ~80 lines.
+ * Auth state moved to useAuthStore (Zustand).
+ * Session restore + login logic extracted to useSessionRestore hook.
+ * App now only handles: layout, auth guard, logout modal.
+ */
 
 import React, { useState, useEffect, useCallback } from 'react';
 import GitServiceConnect from './components/GitServiceConnect';
 import Dashboard from './components/Dashboard';
-import { GithubUser, GithubRepo, IGitService, ServiceType } from './types';
-import { verifyToken as verifyTokenGithub, getRepoDetails as getRepoDetailsGithub, GithubAdapter } from './services/githubService';
-import { verifyToken as verifyTokenGitea, getRepoDetails as getRepoDetailsGitea, GiteaAdapter } from './services/giteaService';
-import { verifyToken as verifyTokenGogs, getRepoDetails as getRepoDetailsGogs, GogsAdapter } from './services/gogsService';
+import { useAuthStore } from './features/auth/store';
+import { useSessionRestore } from './hooks/useSessionRestore';
 import { GithubIcon } from './components/icons/GithubIcon';
-import { AstroIcon } from './components/icons/AstroIcon';
-import { parseRepoUrl } from './utils/parsing';
-import { generateCryptoKey, exportCryptoKey, importCryptoKey, encryptData, decryptData } from './utils/crypto';
 import { useI18n } from './i18n/I18nContext';
 import { LanguageSwitcher } from './components/LanguageSwitcher';
 import { ExclamationTriangleIcon } from './components/icons/ExclamationTriangleIcon';
-import { CloseIcon } from './components/icons/CloseIcon';
 import { SpinnerIcon } from './components/icons/SpinnerIcon';
 
 const App: React.FC = () => {
-  const [githubToken, setGithubToken] = useState<string | null>(null);
-  const [user, setUser] = useState<GithubUser | null>(null);
-  const [selectedRepo, setSelectedRepo] = useState<GithubRepo | null>(null);
-  const [gitService, setGitService] = useState<IGitService | null>(null);
-  const [serviceType, setServiceType] = useState<ServiceType | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-
+  const { user, repo, gitService, serviceType, isLoading, error } = useAuthStore();
+  const { handleLogin, performSimpleLogout } = useSessionRestore();
   const [isLogoutConfirmVisible, setIsLogoutConfirmVisible] = useState(false);
   const { t } = useI18n();
-
-  const performSimpleLogout = useCallback(() => {
-    localStorage.removeItem('github_pat_encrypted');
-    localStorage.removeItem('crypto_key');
-    localStorage.removeItem('selected_repo');
-    localStorage.removeItem('service_type');
-    localStorage.removeItem('instance_url');
-    setGithubToken(null);
-    setUser(null);
-    setSelectedRepo(null);
-    setGitService(null);
-    setServiceType(null);
-    setError(null);
-  }, []);
-
-  useEffect(() => {
-    const handleAuthError = () => {
-      performSimpleLogout();
-    };
-    window.addEventListener('auth-error', handleAuthError);
-    return () => window.removeEventListener('auth-error', handleAuthError);
-  }, [performSimpleLogout]);
-
-  const handleRequestLogout = () => {
-    setIsLogoutConfirmVisible(true);
-  };
-
-  const handleCancelLogout = () => {
-    setIsLogoutConfirmVisible(false);
-  };
 
   const handleConfirmLogout = useCallback(() => {
     performSimpleLogout();
     setIsLogoutConfirmVisible(false);
-    // Force a full reload to completely clear all in-memory states (Zustand stores, etc.)
     window.location.href = window.location.origin;
   }, [performSimpleLogout]);
 
-  useEffect(() => {
-    const encryptedToken = localStorage.getItem('github_pat_encrypted');
-    const keyJson = localStorage.getItem('crypto_key');
-    const repoJson = localStorage.getItem('selected_repo');
-    const serviceTypeFromSession = localStorage.getItem('service_type') as ServiceType | null;
-    const instanceUrl = localStorage.getItem('instance_url');
-
-    if (encryptedToken && keyJson && repoJson && serviceTypeFromSession) {
-      const restoreSession = async () => {
-        setIsLoading(true);
-        try {
-          const key = await importCryptoKey(JSON.parse(keyJson));
-          const token = await decryptData(encryptedToken, key);
-          const repo = JSON.parse(repoJson);
-
-          let userData, repoData;
-          let service: IGitService;
-
-          if (serviceTypeFromSession === 'gitea' || serviceTypeFromSession === 'gogs') {
-            if (!instanceUrl) throw new Error("Self-hosted instance URL not found in session.");
-            if (serviceTypeFromSession === 'gitea') {
-              userData = await verifyTokenGitea(token, instanceUrl);
-              repoData = await getRepoDetailsGitea(token, repo.owner.login, repo.name, instanceUrl);
-              service = new GiteaAdapter(token, repo.owner.login, repo.name, instanceUrl);
-            } else { // Gogs
-              userData = await verifyTokenGogs(token, instanceUrl);
-              repoData = await getRepoDetailsGogs(token, repo.owner.login, repo.name, instanceUrl);
-              service = new GogsAdapter(token, repo.owner.login, repo.name, instanceUrl);
-            }
-          } else { // Github
-            userData = await verifyTokenGithub(token);
-            repoData = await getRepoDetailsGithub(token, repo.owner.login, repo.name);
-            service = new GithubAdapter(token, repo.owner.login, repo.name);
-          }
-
-          if (!repoData.permissions?.push) {
-            throw new Error("You do not have write permissions for this repository.");
-          }
-
-          setUser(userData);
-          setGithubToken(token);
-          setSelectedRepo(repoData);
-          setGitService(service);
-          setServiceType(serviceTypeFromSession);
-        } catch (e) {
-          console.error("Session restore failed:", e);
-          performSimpleLogout();
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      restoreSession();
-    } else {
-      setIsLoading(false);
-    }
-  }, [performSimpleLogout]);
-
+  // Body class management
   useEffect(() => {
     const baseClasses = 'font-sans text-gray-800 antialiased';
-    if (gitService && user && selectedRepo) {
+    if (gitService && user && repo) {
       document.body.className = `bg-gray-100 ${baseClasses}`;
     } else {
-      document.body.className = `login-bg ${baseClasses} overflow-hidden`; // Prevent scroll on login
+      document.body.className = `login-bg ${baseClasses} overflow-hidden`;
     }
     return () => { document.body.className = ''; }
-  }, [gitService, user, selectedRepo]);
-
-  const handleLogin = useCallback(async (token: string, repoUrl: string, serviceType: ServiceType, instanceUrl?: string) => {
-    setIsLoading(true);
-    setError(null);
-
-    const repoParts = parseRepoUrl(repoUrl);
-    if (!repoParts) {
-      setError(t('app.error.invalidRepoUrl'));
-      setIsLoading(false);
-      return;
-    }
-    const { owner, repo } = repoParts;
-
-    try {
-      let userData, repoData;
-      let service: IGitService;
-
-      if (serviceType === 'gitea' || serviceType === 'gogs') {
-        if (!instanceUrl || !instanceUrl.startsWith('http')) {
-          setError(t('app.error.invalidGiteaUrl'));
-          setIsLoading(false);
-          return;
-        }
-        if (serviceType === 'gitea') {
-          userData = await verifyTokenGitea(token, instanceUrl);
-          repoData = await getRepoDetailsGitea(token, owner, repo, instanceUrl);
-          service = new GiteaAdapter(token, owner, repo, instanceUrl);
-        } else {
-          userData = await verifyTokenGogs(token, instanceUrl);
-          repoData = await getRepoDetailsGogs(token, owner, repo, instanceUrl);
-          service = new GogsAdapter(token, owner, repo, instanceUrl);
-        }
-      } else {
-        userData = await verifyTokenGithub(token);
-        repoData = await getRepoDetailsGithub(token, owner, repo);
-        service = new GithubAdapter(token, owner, repo);
-      }
-
-      if (!repoData.permissions?.push) {
-        throw new Error("You do not have write permissions for this repository.");
-      }
-
-      const key = await generateCryptoKey();
-      const encryptedToken = await encryptData(token, key);
-      const exportedKey = await exportCryptoKey(key);
-
-      localStorage.setItem('github_pat_encrypted', encryptedToken);
-      localStorage.setItem('crypto_key', JSON.stringify(exportedKey));
-      localStorage.setItem('selected_repo', JSON.stringify(repoData));
-      localStorage.setItem('service_type', serviceType);
-      if (instanceUrl) localStorage.setItem('instance_url', instanceUrl);
-
-      setUser(userData);
-      setGithubToken(token);
-      setSelectedRepo(repoData);
-      setGitService(service);
-      setServiceType(serviceType);
-
-    } catch (err) {
-      let errorMessage = err instanceof Error ? err.message : t('app.error.unknown');
-      if (errorMessage.includes("write permissions")) {
-        errorMessage = t('app.error.noWritePermissions');
-      }
-      setError(t('app.error.loginFailed', { message: errorMessage }));
-      performSimpleLogout();
-    } finally {
-      setIsLoading(false);
-    }
-  }, [performSimpleLogout, t]);
+  }, [gitService, user, repo]);
 
   if (isLoading) {
     return (
@@ -209,8 +49,11 @@ const App: React.FC = () => {
     );
   }
 
+  const isAuthenticated = !!(gitService && user && repo && serviceType);
+
   return (
     <div className="min-h-screen relative flex flex-col">
+      {/* Logout Confirmation Modal */}
       {isLogoutConfirmVisible && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={(e) => e.stopPropagation()}>
           <div className="bg-white rounded-lg shadow-xl border border-notion-border w-full max-w-sm overflow-hidden animate-fade-in">
@@ -231,7 +74,7 @@ const App: React.FC = () => {
               <button onClick={handleConfirmLogout} className="inline-flex justify-center items-center rounded-sm border border-transparent bg-red-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-red-700 transition-colors">
                 {t('app.logout')}
               </button>
-              <button onClick={handleCancelLogout} className="inline-flex justify-center items-center rounded-sm border border-notion-border bg-white px-3 py-1.5 text-xs font-medium text-notion-text shadow-sm hover:bg-notion-hover transition-colors">
+              <button onClick={() => setIsLogoutConfirmVisible(false)} className="inline-flex justify-center items-center rounded-sm border border-notion-border bg-white px-3 py-1.5 text-xs font-medium text-notion-text shadow-sm hover:bg-notion-hover transition-colors">
                 {t('app.logoutConfirm.cancel')}
               </button>
             </div>
@@ -239,7 +82,7 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {!gitService || !user || !selectedRepo || !serviceType ? (
+      {!isAuthenticated ? (
         <div className="flex-grow flex flex-col items-center justify-center p-4 w-full max-w-screen-xl mx-auto h-screen pb-24 sm:pb-32">
           <GitServiceConnect onSubmit={handleLogin} error={error} />
 
@@ -259,10 +102,10 @@ const App: React.FC = () => {
       ) : (
         <Dashboard
           gitService={gitService}
-          repo={selectedRepo}
+          repo={repo}
           user={user}
           serviceType={serviceType}
-          onLogout={handleRequestLogout}
+          onLogout={() => setIsLogoutConfirmVisible(true)}
         />
       )}
     </div>

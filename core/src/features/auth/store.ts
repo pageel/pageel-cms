@@ -57,14 +57,7 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
   },
 
   clearAuth: () => {
-    // Clear sessionStorage
-    sessionStorage.removeItem('github_pat_encrypted');
-    sessionStorage.removeItem('crypto_key');
-    sessionStorage.removeItem('selected_repo');
-    sessionStorage.removeItem('service_type');
-    sessionStorage.removeItem('instance_url');
-    
-    // Reset state
+    // Only reset Zustand state — localStorage cleanup handled by useSessionRestore
     set({
       user: null,
       repo: null,
