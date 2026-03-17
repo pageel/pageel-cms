@@ -16,24 +16,15 @@ import PostUploadValidationModal from './PostUploadValidationModal';
 import PostImageSelectionModal from './PostImageSelectionModal';
 import { ConfirmationModal } from './ConfirmationModal';
 import { useCollectionStore } from '../features/collections/store';
+import { DEFAULT_SETTINGS } from '../features/settings/types';
 import { resolveImageSource } from '../utils/github';
 import FilterBar, { matchesFilter, FilterValue } from './FilterBar';
 
+// TD-09: Simplified props — PostList reads settings from CollectionStore (SSoT)
 interface PostListProps {
   gitService: IGitService;
   repo: GithubRepo;
-  path: string;
-  imagesPath: string;
-  domainUrl: string;
-  projectType: ProjectType;
   onPostUpdate: () => void;
-  postFileTypes: string;
-  imageFileTypes: string;
-  newImageCommitTemplate: string;
-  updatePostCommitTemplate: string;
-  imageCompressionEnabled: boolean;
-  maxImageSize: number;
-  imageResizeMaxWidth: number;
   onAction: () => void;
 }
 
@@ -72,7 +63,6 @@ const ThumbnailWithAuth: React.FC<{ gitService: IGitService, imagePath: string, 
 
         const fetchBlob = async () => {
             setIsLoading(true);
-            // Remove leading slash if present for API call
             const fullPath = imagePath.startsWith('/') ? imagePath.substring(1) : imagePath;
             try {
                 const blob = await gitService.getFileAsBlob(fullPath);
@@ -81,7 +71,6 @@ const ThumbnailWithAuth: React.FC<{ gitService: IGitService, imagePath: string, 
                     setImageUrl(objectUrl);
                 }
             } catch (e) {
-                // console.error(`Failed to fetch blob for ${fullPath}`, e);
                 if (isMounted) setImageUrl(null);
             } finally {
                 if (isMounted) setIsLoading(false);
@@ -112,16 +101,21 @@ const ThumbnailWithAuth: React.FC<{ gitService: IGitService, imagePath: string, 
 const PostList: React.FC<PostListProps> = ({
   gitService,
   repo,
-  path,
-  imagesPath, // Needed for potential relative path resolution logic if expanded
-  domainUrl,
-  projectType,
   onPostUpdate,
-  postFileTypes,
-  imageFileTypes,
-  updatePostCommitTemplate,
   onAction
 }) => {
+  // TD-09: Read settings from CollectionStore (SSoT) instead of props
+  const { workspace, getActiveCollection } = useCollectionStore();
+  const activeCollection = getActiveCollection();
+  const wsSettings = workspace?.settings || {};
+  
+  const path = activeCollection?.postsPath || '';
+  const imagesPath = activeCollection?.imagesPath || '';
+  const domainUrl = (wsSettings as any).domainUrl || '';
+  const projectType: ProjectType = (wsSettings as any).projectType || DEFAULT_SETTINGS.projectType;
+  const postFileTypes = (wsSettings as any).postFileTypes || DEFAULT_SETTINGS.postFileTypes;
+  const imageFileTypes = (wsSettings as any).imageFileTypes || DEFAULT_SETTINGS.imageFileTypes;
+  const updatePostCommitTemplate = (wsSettings as any).updatePostCommit || DEFAULT_SETTINGS.updatePostCommit;
   const { t, language } = useI18n();
   const [posts, setPosts] = useState<PostData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -154,9 +148,7 @@ const PostList: React.FC<PostListProps> = ({
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [postToUpdateImage, setPostToUpdateImage] = useState<PostData | null>(null);
 
-  // Columns Configuration
-  const { getActiveCollection } = useCollectionStore();
-  const activeCollection = getActiveCollection();
+  // Columns Configuration (activeCollection already destructured above via TD-09)
   const activeTemplate = activeCollection?.template || null;
   const [visibleFields, setVisibleFields] = useState<string[]>([]);
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>({ '__name__': 35 });

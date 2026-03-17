@@ -239,18 +239,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <PostList
             gitService={gitService}
             repo={currentRepo}
-            path={effectivePostsPath}
-            imagesPath={effectiveImagesPath}
-            domainUrl={settings.domainUrl}
-            projectType={settings.projectType}
             onPostUpdate={fetchStats}
-            postFileTypes={settings.postFileTypes}
-            imageFileTypes={settings.imageFileTypes}
-            newImageCommitTemplate={settings.newImageCommit}
-            updatePostCommitTemplate={settings.updatePostCommit}
-            imageCompressionEnabled={settings.imageCompressionEnabled}
-            maxImageSize={settings.maxImageSize}
-            imageResizeMaxWidth={settings.imageResizeMaxWidth}
             onAction={handleAction}
           />
         );
