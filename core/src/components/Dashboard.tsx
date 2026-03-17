@@ -391,11 +391,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         <main className="flex-1 overflow-y-auto bg-white">
-          <div className={`w-full mx-auto py-8 ${
-            activeView === 'dashboard' || activeView === 'images' || activeView === 'template'
-              ? 'px-4 sm:px-6 lg:px-6'   /* Data views: tighter padding */
-              : 'px-6 sm:px-8 lg:px-12'   /* Form views: wider padding */
-          }`}>
+          <div className="w-full mx-auto py-8 px-4 sm:px-6 lg:px-6">
             {/* Notion-style Page Header */}
             <div className="mb-8 group">
               <div className="flex items-center mb-6">

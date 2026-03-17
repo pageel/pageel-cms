@@ -187,7 +187,7 @@ const BackupManager: React.FC<BackupManagerProps> = ({ gitService, repo, postsPa
     }
 
     return (
-        <div className="max-w-4xl mx-auto">
+        <div>
             {/* Header */}
             <div className="mb-6 p-4 bg-notion-sidebar border border-notion-border rounded-md">
                 <h3 className="text-sm font-bold text-notion-text uppercase tracking-wide mb-1">{t('backupManager.create.title')}</h3>

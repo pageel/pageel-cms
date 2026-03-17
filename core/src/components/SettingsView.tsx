@@ -71,7 +71,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     return (
-        <div className="max-w-4xl mx-auto pb-20">
+        <div className="pb-20">
              {/* Header Info */}
             <div className="mb-8 flex items-center p-4 border border-notion-border rounded-md bg-white shadow-sm">
                 <img src={user.avatar_url} alt={user.login} className="w-10 h-10 rounded-full mr-4 border border-notion-border" />

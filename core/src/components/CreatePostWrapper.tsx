@@ -35,7 +35,7 @@ const CreatePostWrapper: React.FC<CreatePostWrapperProps> = ({
 
     if (mode === 'library') {
         return (
-            <div className="w-full max-w-6xl mx-auto animate-fade-in">
+            <div className="w-full animate-fade-in">
                 
                 {/* Intro Section */}
                 <div className="mb-8">
