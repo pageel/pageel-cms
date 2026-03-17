@@ -383,7 +383,7 @@ const PostDetailView: React.FC<PostDetailViewProps> = ({ post, onBack, onDelete,
   const hasCoverImage = !!(editableFrontmatter.image || editableFrontmatter.cover || editableFrontmatter.thumbnail || editableFrontmatter.heroImage || post.thumbnailUrl);
 
   return (
-    <div className="h-full flex flex-col bg-white animate-fade-in relative -mx-6 sm:-mx-8 lg:-mx-12 -my-8">
+    <div className="h-full flex flex-col bg-white animate-fade-in relative -mx-4 sm:-mx-6 -my-8">
       <input type="file" ref={updatePostFileInputRef} className="hidden" accept=".md,.mdx" onChange={confirmUpdateFile} />
       
       {isImageModalOpen && (
@@ -398,7 +398,7 @@ const PostDetailView: React.FC<PostDetailViewProps> = ({ post, onBack, onDelete,
 
       {/* Sticky Header - Aligned to Content */}
       <header className="h-12 border-b border-notion-border bg-white sticky top-0 z-30 flex-shrink-0 backdrop-blur-md bg-white/85">
-        <div className="max-w-4xl mx-auto px-8 lg:px-12 h-full flex justify-between items-center w-full">
+        <div className="px-6 h-full flex justify-between items-center w-full">
             <div className="flex items-center gap-2 overflow-hidden">
                 <button 
                         onClick={onBack}
@@ -461,7 +461,7 @@ const PostDetailView: React.FC<PostDetailViewProps> = ({ post, onBack, onDelete,
 
       {/* Main Scrollable Content */}
       <div id="post-detail-container" className="flex-grow overflow-y-auto bg-white custom-scrollbar pb-20">
-            <div className="max-w-4xl mx-auto px-8 lg:px-12 py-8 relative w-full">
+            <div className="px-6 py-8 relative w-full">
                 
                 {/* Contained Cover Image */}
                 {hasCoverImage && (
