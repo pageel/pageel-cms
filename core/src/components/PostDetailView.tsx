@@ -459,152 +459,192 @@ const PostDetailView: React.FC<PostDetailViewProps> = ({ post, onBack, onDelete,
         </div>
       </header>
 
-      {/* Main Scrollable Content */}
-      <div id="post-detail-container" className="flex-grow overflow-y-auto bg-white custom-scrollbar pb-20">
-            <div className="px-6 py-8 relative w-full">
-                
-                {/* Contained Cover Image */}
-                {hasCoverImage && (
-                    <CoverImage 
-                        thumbnailUrl={editableFrontmatter.image || editableFrontmatter.cover || editableFrontmatter.thumbnail || editableFrontmatter.heroImage || post.thumbnailUrl} 
-                        gitService={gitService} 
-                        repo={repo} 
-                        domainUrl={domainUrl} 
-                        projectType={projectType}
-                        className="w-full h-48 object-cover rounded-xl shadow-sm border border-notion-border mb-[-2rem]"
-                    />
-                )}
+      {/* Main Scrollable Content — 2-column WordPress-style layout */}
+      <div id="post-detail-container" className="flex-grow overflow-y-auto bg-white custom-scrollbar">
+            <div className="flex flex-col lg:flex-row w-full h-full">
 
-                {/* Floating Icon */}
-                <div className="relative z-10 pl-2">
-                    <div className={`
-                        w-20 h-20 rounded-md shadow-sm flex items-center justify-center text-4xl select-none bg-white
-                        ${hasCoverImage ? '' : 'mt-12 mb-[-1rem]'}
-                    `}>
-                        <span className="transform -translate-y-0.5">📄</span>
-                    </div>
+              {/* LEFT COLUMN — Content Editor */}
+              <div className="flex-1 min-w-0 px-6 py-8 overflow-y-auto">
+                {/* Title - Auto Resizing Textarea */}
+                <textarea 
+                    ref={titleTextareaRef}
+                    className="text-3xl lg:text-4xl font-bold text-notion-text mb-6 break-words leading-tight tracking-tight w-full border-none focus:ring-0 p-0 placeholder-gray-300 resize-none overflow-hidden bg-transparent"
+                    value={editableFrontmatter.title || ''}
+                    onChange={(e) => {
+                        handleFrontmatterChange('title', e.target.value);
+                        e.target.style.height = 'auto';
+                        e.target.style.height = e.target.scrollHeight + 'px';
+                    }}
+                    onKeyDown={(e) => { if(e.key === 'Enter') e.preventDefault(); }}
+                    placeholder="Untitled"
+                    rows={1}
+                />
+
+                <div className="border-t border-notion-border mb-6"></div>
+
+                {/* Tabs */}
+                <div className="flex items-center gap-6 mb-6">
+                    <button
+                        onClick={() => setActiveTab('preview')}
+                        className={`pb-1 text-sm font-medium transition-all ${
+                            activeTab === 'preview'
+                            ? 'text-notion-text border-b-2 border-notion-text'
+                            : 'text-notion-muted hover:text-notion-text border-b-2 border-transparent'
+                        }`}
+                    >
+                        {t('postPreview.tabPreview')}
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('code')}
+                        className={`pb-1 text-sm font-medium transition-all ${
+                            activeTab === 'code'
+                            ? 'text-notion-text border-b-2 border-notion-text'
+                            : 'text-notion-muted hover:text-notion-text border-b-2 border-transparent'
+                        }`}
+                    >
+                        {t('postPreview.tabMarkdown')} (Edit)
+                    </button>
                 </div>
 
-                <div className="pt-8">
-                    {/* Title - Auto Resizing Textarea */}
-                    <textarea 
-                        ref={titleTextareaRef}
-                        className="text-4xl font-bold text-notion-text mb-8 break-words leading-tight tracking-tight w-full border-none focus:ring-0 p-0 placeholder-gray-300 resize-none overflow-hidden bg-transparent mt-4"
-                        value={editableFrontmatter.title || ''}
-                        onChange={(e) => {
-                            handleFrontmatterChange('title', e.target.value);
-                            e.target.style.height = 'auto';
-                            e.target.style.height = e.target.scrollHeight + 'px';
-                        }}
-                        onKeyDown={(e) => { if(e.key === 'Enter') e.preventDefault(); }}
-                        placeholder="Untitled"
-                        rows={1}
+                {/* Content Area */}
+                <div className="pb-20">
+                {activeTab === 'preview' ? (
+                    <div
+                        className="prose prose-slate prose-sm sm:prose-base max-w-none text-notion-text
+                        prose-headings:font-semibold prose-headings:text-gray-900
+                        prose-h1:text-4xl prose-h1:font-bold prose-h1:tracking-tight prose-h1:mt-10 prose-h1:mb-6 prose-h1:pb-2 prose-h1:border-b prose-h1:border-gray-200
+                        prose-h2:text-2xl prose-h2:font-semibold prose-h2:tracking-tight prose-h2:mt-8 prose-h2:mb-4 prose-h2:pb-2 prose-h2:border-b prose-h2:border-gray-200
+                        prose-h3:text-xl prose-h3:font-semibold prose-h3:mt-6 prose-h3:mb-3
+                        prose-h4:text-lg prose-h4:font-semibold prose-h4:mt-4 prose-h4:mb-2
+                        prose-h5:text-base prose-h5:font-semibold prose-h5:mt-4 prose-h5:mb-2
+                        prose-h6:text-sm prose-h6:font-bold prose-h6:text-gray-600 prose-h6:uppercase prose-h6:mt-4 prose-h6:mb-2
+                        prose-p:text-gray-800 prose-p:leading-7 prose-p:my-4
+                        prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline
+                        prose-ul:list-disc prose-ul:pl-6 prose-ul:my-4
+                        prose-ol:list-decimal prose-ol:pl-6 prose-ol:my-4
+                        prose-li:my-1.5 prose-li:text-gray-800
+                        prose-blockquote:border-l-4 prose-blockquote:border-gray-300 prose-blockquote:text-gray-600 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:my-6
+                        prose-img:rounded-lg prose-img:shadow-sm prose-img:my-6
+                        prose-code:text-sm prose-code:bg-gray-100 prose-code:text-gray-800 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:font-mono prose-code:font-medium prose-code:before:content-none prose-code:after:content-none
+                        prose-pre:bg-gray-50 prose-pre:border prose-pre:border-gray-200 prose-pre:text-gray-800 prose-pre:rounded-lg prose-pre:p-4 prose-pre:shadow-sm prose-pre:my-6
+                        prose-hr:my-8 prose-hr:border-gray-200"
+                        dangerouslySetInnerHTML={createMarkup(editableBody)}
                     />
-
-                    {/* Metadata Grid */}
-                    <div className="mb-10 space-y-0 text-sm">
-                        {/* Existing Fields */}
-                        {Object.entries(editableFrontmatter).filter(([k]) => k !== 'title').map(([key, value]) => (
-                            <div key={key} className="flex py-1.5 group items-start">
-                                <div className="w-32 flex-shrink-0 flex items-center text-notion-muted pt-1">
-                                    <div className="flex items-center px-1.5 py-0.5 rounded-sm transition-colors cursor-default">
-                                        <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 mr-2 fill-current opacity-60 flex-shrink-0"><path d="M1.5 6.5a1 1 0 011-1h11a1 1 0 011 1v7a1 1 0 01-1 1h-11a1 1 0 01-1-1v-7z" opacity="0.6"/><path d="M1.5 2.5a1 1 0 011-1h11a1 1 0 011 1v2a1 1 0 01-1 1h-11a1 1 0 01-1-1v-2z"/></svg>
-                                        <span className="capitalize truncate text-xs font-medium">{key}</span>
-                                    </div>
-                                </div>
-                                <div className="flex-grow min-w-0 flex items-center px-1.5">
-                                    {renderInput(key, value)}
-                                </div>
-                            </div>
-                        ))}
-
-                        {/* Missing Fields Suggestions */}
-                        {missingFields.length > 0 && (
-                            <div className="pt-2 mt-2 border-t border-dashed border-notion-border">
-                                <p className="text-[10px] uppercase font-bold text-notion-muted mb-2 px-1.5">Suggested Properties</p>
-                                {missingFields.map(field => (
-                                    <div key={field} className="flex py-1.5 group items-center opacity-70 hover:opacity-100 transition-opacity">
-                                        <div className="w-32 flex-shrink-0 flex items-center text-notion-muted">
-                                            <div className="flex items-center px-1.5 py-0.5 rounded-sm">
-                                                <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 mr-2 fill-current opacity-60"><path d="M1.5 6.5a1 1 0 011-1h11a1 1 0 011 1v7a1 1 0 01-1 1h-11a1 1 0 01-1-1v-7z" opacity="0.6"/><path d="M1.5 2.5a1 1 0 011-1h11a1 1 0 011 1v2a1 1 0 01-1 1h-11a1 1 0 01-1-1v-2z"/></svg>
-                                                <span className="capitalize truncate text-xs font-medium">{field}</span>
-                                            </div>
-                                        </div>
-                                        <div className="flex-grow px-1.5">
-                                            <button 
-                                                onClick={() => handleAddMissingField(field)}
-                                                className="text-xs text-notion-blue hover:underline flex items-center"
-                                            >
-                                                <PlusIcon className="w-3 h-3 mr-1" />
-                                                Add property
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="border-t border-notion-border mb-8"></div>
-
-                    {/* Tabs */}
-                    <div className="flex items-center gap-6 mb-6">
-                        <button
-                            onClick={() => setActiveTab('preview')}
-                            className={`pb-1 text-sm font-medium transition-all ${
-                                activeTab === 'preview'
-                                ? 'text-notion-text border-b-2 border-notion-text'
-                                : 'text-notion-muted hover:text-notion-text border-b-2 border-transparent'
-                            }`}
-                        >
-                            {t('postPreview.tabPreview')}
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('code')}
-                            className={`pb-1 text-sm font-medium transition-all ${
-                                activeTab === 'code'
-                                ? 'text-notion-text border-b-2 border-notion-text'
-                                : 'text-notion-muted hover:text-notion-text border-b-2 border-transparent'
-                            }`}
-                        >
-                            {t('postPreview.tabMarkdown')} (Edit)
-                        </button>
-                    </div>
-
-                    {/* Content Area */}
-                    {activeTab === 'preview' ? (
-                        <div
-                            className="prose prose-slate prose-sm sm:prose-base max-w-none text-notion-text
-                            prose-headings:font-semibold prose-headings:text-gray-900
-                            prose-h1:text-4xl prose-h1:font-bold prose-h1:tracking-tight prose-h1:mt-10 prose-h1:mb-6 prose-h1:pb-2 prose-h1:border-b prose-h1:border-gray-200
-                            prose-h2:text-2xl prose-h2:font-semibold prose-h2:tracking-tight prose-h2:mt-8 prose-h2:mb-4 prose-h2:pb-2 prose-h2:border-b prose-h2:border-gray-200
-                            prose-h3:text-xl prose-h3:font-semibold prose-h3:mt-6 prose-h3:mb-3
-                            prose-h4:text-lg prose-h4:font-semibold prose-h4:mt-4 prose-h4:mb-2
-                            prose-h5:text-base prose-h5:font-semibold prose-h5:mt-4 prose-h5:mb-2
-                            prose-h6:text-sm prose-h6:font-bold prose-h6:text-gray-600 prose-h6:uppercase prose-h6:mt-4 prose-h6:mb-2
-                            prose-p:text-gray-800 prose-p:leading-7 prose-p:my-4
-                            prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline
-                            prose-ul:list-disc prose-ul:pl-6 prose-ul:my-4
-                            prose-ol:list-decimal prose-ol:pl-6 prose-ol:my-4
-                            prose-li:my-1.5 prose-li:text-gray-800
-                            prose-blockquote:border-l-4 prose-blockquote:border-gray-300 prose-blockquote:text-gray-600 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:my-6
-                            prose-img:rounded-lg prose-img:shadow-sm prose-img:my-6
-                            prose-code:text-sm prose-code:bg-gray-100 prose-code:text-gray-800 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:font-mono prose-code:font-medium prose-code:before:content-none prose-code:after:content-none
-                            prose-pre:bg-gray-50 prose-pre:border prose-pre:border-gray-200 prose-pre:text-gray-800 prose-pre:rounded-lg prose-pre:p-4 prose-pre:shadow-sm prose-pre:my-6
-                            prose-hr:my-8 prose-hr:border-gray-200"
-                            dangerouslySetInnerHTML={createMarkup(editableBody)}
+                ) : (
+                    <div className="rounded-lg border border-notion-border overflow-hidden bg-white shadow-inner">
+                        <textarea 
+                            className="w-full h-[60vh] p-6 text-xs font-mono text-notion-text overflow-x-auto whitespace-pre-wrap leading-relaxed focus:outline-none resize-none bg-notion-sidebar/30"
+                            value={editableBody}
+                            onChange={handleBodyChange}
+                            spellCheck={false}
                         />
-                    ) : (
-                        <div className="rounded-lg border border-notion-border overflow-hidden bg-white shadow-inner">
-                            <textarea 
-                                className="w-full h-[60vh] p-6 text-xs font-mono text-notion-text overflow-x-auto whitespace-pre-wrap leading-relaxed focus:outline-none resize-none bg-notion-sidebar/30"
-                                value={editableBody}
-                                onChange={handleBodyChange}
-                                spellCheck={false}
-                            />
-                        </div>
-                    )}
+                    </div>
+                )}
                 </div>
+              </div>
+
+              {/* RIGHT COLUMN — Settings Panel (WordPress-style) */}
+              <div className="w-full lg:w-80 xl:w-96 flex-shrink-0 border-t lg:border-t-0 lg:border-l border-notion-border bg-notion-sidebar/30 overflow-y-auto">
+                <div className="p-5 space-y-5">
+
+                  {/* Featured Image Section */}
+                  <div>
+                    <p className="text-[10px] uppercase font-bold text-notion-muted mb-3 tracking-wider">Featured Image</p>
+                    {hasCoverImage ? (
+                      <div className="relative group">
+                        <CoverImage 
+                            thumbnailUrl={editableFrontmatter.image || editableFrontmatter.cover || editableFrontmatter.thumbnail || editableFrontmatter.heroImage || post.thumbnailUrl} 
+                            gitService={gitService} 
+                            repo={repo} 
+                            domainUrl={domainUrl} 
+                            projectType={projectType}
+                            className="w-full h-40 object-cover rounded-lg border border-notion-border"
+                        />
+                        <button
+                          onClick={handleUpdateImage}
+                          className="absolute inset-0 bg-black/0 group-hover:bg-black/40 flex items-center justify-center rounded-lg transition-all"
+                        >
+                          <span className="opacity-0 group-hover:opacity-100 text-white text-xs font-medium bg-black/60 px-3 py-1.5 rounded-md transition-opacity">
+                            Change Image
+                          </span>
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={handleUpdateImage}
+                        className="w-full h-28 rounded-lg border-2 border-dashed border-notion-border hover:border-notion-blue/50 flex flex-col items-center justify-center gap-2 text-notion-muted hover:text-notion-blue transition-colors group"
+                      >
+                        <ImageIcon className="w-6 h-6 opacity-50 group-hover:opacity-80 transition-opacity" />
+                        <span className="text-xs font-medium">Set Featured Image</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="border-t border-notion-border"></div>
+
+                  {/* Metadata Fields */}
+                  <div>
+                    <p className="text-[10px] uppercase font-bold text-notion-muted mb-3 tracking-wider">Properties</p>
+                    <div className="space-y-0">
+                      {Object.entries(editableFrontmatter).filter(([k]) => k !== 'title').map(([key, value]) => (
+                          <div key={key} className="flex py-1.5 group items-start">
+                              <div className="w-24 flex-shrink-0 flex items-center text-notion-muted pt-1">
+                                  <div className="flex items-center px-1 py-0.5 rounded-sm transition-colors cursor-default">
+                                      <svg viewBox="0 0 16 16" className="w-3 h-3 mr-1.5 fill-current opacity-50 flex-shrink-0"><path d="M1.5 6.5a1 1 0 011-1h11a1 1 0 011 1v7a1 1 0 01-1 1h-11a1 1 0 01-1-1v-7z" opacity="0.6"/><path d="M1.5 2.5a1 1 0 011-1h11a1 1 0 011 1v2a1 1 0 01-1 1h-11a1 1 0 01-1-1v-2z"/></svg>
+                                      <span className="capitalize truncate text-[11px] font-medium">{key}</span>
+                                  </div>
+                              </div>
+                              <div className="flex-grow min-w-0 flex items-center">
+                                  {renderInput(key, value)}
+                              </div>
+                          </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Missing Fields Suggestions */}
+                  {missingFields.length > 0 && (
+                      <>
+                        <div className="border-t border-dashed border-notion-border"></div>
+                        <div>
+                          <p className="text-[10px] uppercase font-bold text-notion-muted mb-2 tracking-wider">Suggested Properties</p>
+                          {missingFields.map(field => (
+                              <div key={field} className="flex py-1.5 group items-center opacity-70 hover:opacity-100 transition-opacity">
+                                  <div className="w-24 flex-shrink-0 flex items-center text-notion-muted">
+                                      <div className="flex items-center px-1 py-0.5 rounded-sm">
+                                          <svg viewBox="0 0 16 16" className="w-3 h-3 mr-1.5 fill-current opacity-50"><path d="M1.5 6.5a1 1 0 011-1h11a1 1 0 011 1v7a1 1 0 01-1 1h-11a1 1 0 01-1-1v-7z" opacity="0.6"/><path d="M1.5 2.5a1 1 0 011-1h11a1 1 0 011 1v2a1 1 0 01-1 1h-11a1 1 0 01-1-1v-2z"/></svg>
+                                          <span className="capitalize truncate text-[11px] font-medium">{field}</span>
+                                      </div>
+                                  </div>
+                                  <div className="flex-grow">
+                                      <button 
+                                          onClick={() => handleAddMissingField(field)}
+                                          className="text-xs text-notion-blue hover:underline flex items-center"
+                                      >
+                                          <PlusIcon className="w-3 h-3 mr-1" />
+                                          Add
+                                      </button>
+                                  </div>
+                              </div>
+                          ))}
+                        </div>
+                      </>
+                  )}
+
+                  <div className="border-t border-notion-border"></div>
+
+                  {/* File Info */}
+                  <div>
+                    <p className="text-[10px] uppercase font-bold text-notion-muted mb-2 tracking-wider">File</p>
+                    <div className="text-xs text-notion-muted space-y-1">
+                      <p className="truncate" title={post.path}>📄 {post.name}</p>
+                      <p className="truncate" title={post.path}>📁 {post.path}</p>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
             </div>
       </div>
     </div>

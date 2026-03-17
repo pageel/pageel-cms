@@ -1,6 +1,6 @@
 # Pageel CMS
 
-> **Phiên bản:** 1.1.0-beta.1 | **Cập nhật:** Tháng 2/2026
+> **Phiên bản:** 1.2.0 | **Cập nhật:** Tháng 3/2026
 
 Hệ quản trị nội dung (CMS) mạnh mẽ, chạy hoàn toàn trên trình duyệt (client-side) để quản lý nội dung Markdown/MDX và hình ảnh trực tiếp trên **GitHub**, **Gitea**, hoặc **Gogs**. Được xây dựng với **React 19** và **TypeScript**, mang lại giao diện hiện đại phong cách Notion.
 
@@ -15,8 +15,10 @@ Hệ quản trị nội dung (CMS) mạnh mẽ, chạy hoàn toàn trên trình 
   <p>Chạy hoàn toàn trên trình duyệt. Không database. Không backend.</p>
 
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.1.0--beta.1-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)](CHANGELOG.md)
 ![Status](https://img.shields.io/badge/status-active-success.svg)
+[![GitHub](https://img.shields.io/badge/GitHub-supported-181717?logo=github&logoColor=white)](https://github.com)
+[![Astro](https://img.shields.io/badge/Astro-compatible-BC52EE?logo=astro&logoColor=white)](https://astro.build)
 
 </div>
 
@@ -61,6 +63,7 @@ Trung tâm quản lý nội dung của bạn.
 - **Bộ lọc nâng cao:** Lọc theo văn bản, khoảng thời gian, thẻ (tags), trạng thái (boolean) và số.
 - **Sắp xếp thông minh:** Sắp xếp theo bất kỳ trường nào có trong template.
 - **Thao tác nhanh:** Sửa frontmatter trực tiếp, trình soạn thảo Markdown split-pane, upload file.
+- **Trình soạn thảo kiểu WordPress:** Layout 2 cột — nội dung bên trái, bảng cài đặt frontmatter bên phải.
 
 ### 2. 🖼️ Quản lý hình ảnh (`ImageList`)
 
