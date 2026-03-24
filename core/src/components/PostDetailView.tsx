@@ -344,33 +344,59 @@ const PostDetailView: React.FC<PostDetailViewProps> = ({ post, onBack, onDelete,
   const [fieldModalKey, setFieldModalKey] = useState<string | null>(null);
   const [fieldModalValue, setFieldModalValue] = useState<string>('');
   const [fieldModalIsComplex, setFieldModalIsComplex] = useState(false);
+  // Gallery-specific state
+  const [fieldModalGalleryItems, setFieldModalGalleryItems] = useState<Array<Record<string, any>>>([]);
+  const [fieldModalIsGallery, setFieldModalIsGallery] = useState(false);
+  const [galleryDragIndex, setGalleryDragIndex] = useState<number | null>(null);
+  const [isGalleryPickerOpen, setIsGalleryPickerOpen] = useState(false);
+
+  // Detect gallery-like array: [{src: "...", label?: "..."}, ...]
+  const isGalleryArray = (value: any): boolean => {
+      return Array.isArray(value) && value.length > 0 
+          && typeof value[0] === 'object' && value[0] !== null 
+          && ('src' in value[0] || 'image' in value[0] || 'url' in value[0]);
+  };
+
+  const getGalleryImageKey = (item: Record<string, any>): string => {
+      if ('src' in item) return 'src';
+      if ('image' in item) return 'image';
+      if ('url' in item) return 'url';
+      return 'src';
+  };
 
   const openFieldModal = (key: string, value: any) => {
       setFieldModalKey(key);
-      const isComplex = (typeof value === 'object' && value !== null);
-      setFieldModalIsComplex(isComplex);
-      if (isComplex) {
-          setFieldModalValue(JSON.stringify(value, null, 2));
-      } else if (Array.isArray(value)) {
-          setFieldModalValue(value.join(', '));
+      if (isGalleryArray(value)) {
+          setFieldModalIsGallery(true);
+          setFieldModalIsComplex(false);
+          setFieldModalGalleryItems(value.map((item: any) => ({ ...item })));
+          setFieldModalValue('');
       } else {
-          setFieldModalValue(String(value || ''));
+          setFieldModalIsGallery(false);
+          const isComplex = (typeof value === 'object' && value !== null);
+          setFieldModalIsComplex(isComplex);
+          if (isComplex) {
+              setFieldModalValue(JSON.stringify(value, null, 2));
+          } else if (Array.isArray(value)) {
+              setFieldModalValue(value.join(', '));
+          } else {
+              setFieldModalValue(String(value || ''));
+          }
       }
   };
 
   const handleFieldModalSave = () => {
       if (!fieldModalKey) return;
+      if (fieldModalIsGallery) {
+          handleFrontmatterChange(fieldModalKey, fieldModalGalleryItems);
+          setFieldModalKey(null);
+          return;
+      }
       let parsedValue: any;
-      
       if (fieldModalIsComplex) {
-          try {
-              parsedValue = JSON.parse(fieldModalValue);
-          } catch {
-              alert('Invalid JSON format. Please check the syntax.');
-              return;
-          }
+          try { parsedValue = JSON.parse(fieldModalValue); }
+          catch { alert('Invalid JSON format.'); return; }
       } else {
-          // Check if the original value was an array (simple string array)
           const originalValue = editableFrontmatter[fieldModalKey];
           if (Array.isArray(originalValue)) {
               parsedValue = fieldModalValue.split(',').map((s: string) => s.trim()).filter((s: string) => s);
@@ -378,9 +404,49 @@ const PostDetailView: React.FC<PostDetailViewProps> = ({ post, onBack, onDelete,
               parsedValue = fieldModalValue;
           }
       }
-      
       handleFrontmatterChange(fieldModalKey, parsedValue);
       setFieldModalKey(null);
+  };
+
+  // Gallery helpers
+  const handleGalleryItemChange = (index: number, field: string, value: string) => {
+      setFieldModalGalleryItems(prev => {
+          const updated = [...prev];
+          updated[index] = { ...updated[index], [field]: value };
+          return updated;
+      });
+  };
+
+  const handleGalleryRemove = (index: number) => {
+      setFieldModalGalleryItems(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleGalleryDragStart = (index: number) => { setGalleryDragIndex(index); };
+
+  const handleGalleryDragOver = (e: React.DragEvent, index: number) => {
+      e.preventDefault();
+      if (galleryDragIndex === null || galleryDragIndex === index) return;
+      setFieldModalGalleryItems(prev => {
+          const updated = [...prev];
+          const [dragged] = updated.splice(galleryDragIndex, 1);
+          updated.splice(index, 0, dragged);
+          return updated;
+      });
+      setGalleryDragIndex(index);
+  };
+
+  const handleGalleryDragEnd = () => { setGalleryDragIndex(null); };
+
+  const handleGalleryAddFromPicker = (result: { type: 'new' | 'existing', file?: File, path?: string }) => {
+      if (result.path) {
+          let finalPath = result.path;
+          if (finalPath.startsWith('public/')) finalPath = finalPath.replace('public/', '/');
+          else if (!finalPath.startsWith('http') && !finalPath.startsWith('/')) finalPath = '/' + finalPath;
+          const imageKey = fieldModalGalleryItems.length > 0 ? getGalleryImageKey(fieldModalGalleryItems[0]) : 'src';
+          const fileName = finalPath.split('/').pop()?.replace(/\.[^.]+$/, '') || 'New Image';
+          setFieldModalGalleryItems(prev => [...prev, { [imageKey]: finalPath, label: fileName }]);
+      }
+      setIsGalleryPickerOpen(false);
   };
 
   // Helper: detect if value is array of objects
@@ -410,12 +476,15 @@ const PostDetailView: React.FC<PostDetailViewProps> = ({ post, onBack, onDelete,
 
       // Array of objects (gallery, etc.) — show preview + edit button
       if (isArrayOfObjects(value)) {
+          const isGallery = isGalleryArray(value);
           return (
               <button
                 onClick={() => openFieldModal(key, value)}
                 className="w-full text-left flex items-center gap-1.5 px-1 py-0.5 text-sm text-notion-blue hover:bg-notion-hover/50 rounded-sm transition-colors group"
               >
-                <span className="truncate text-xs">{`[${value.length} items]`}</span>
+                <span className="truncate text-xs">
+                  {isGallery ? `🖼 ${value.length} images` : `[${value.length} items]`}
+                </span>
                 <EditIcon className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
               </button>
           );
@@ -506,52 +575,148 @@ const PostDetailView: React.FC<PostDetailViewProps> = ({ post, onBack, onDelete,
           />
       )}
 
+      {/* Gallery Image Picker (reuse PostImageSelectionModal) */}
+      {isGalleryPickerOpen && (
+          <PostImageSelectionModal
+            gitService={gitService}
+            imagesPath={imagesPath}
+            imageFileTypes={imageFileTypes}
+            onClose={() => setIsGalleryPickerOpen(false)}
+            onConfirm={handleGalleryAddFromPicker}
+          />
+      )}
+
       {/* Frontmatter Field Edit Modal */}
       {fieldModalKey && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[80vh] flex flex-col border border-notion-border overflow-hidden">
-            <header className="px-5 py-3 border-b border-notion-border flex items-center justify-between bg-white">
+          <div className={`bg-white rounded-lg shadow-xl w-full flex flex-col border border-notion-border overflow-hidden ${
+            fieldModalIsGallery ? 'max-w-2xl max-h-[85vh]' : 'max-w-lg max-h-[80vh]'
+          }`}>
+            <header className="px-5 py-3 border-b border-notion-border flex items-center justify-between bg-white flex-shrink-0">
               <div className="flex items-center gap-2">
-                <EditIcon className="w-4 h-4 text-notion-muted" />
+                {fieldModalIsGallery 
+                  ? <ImageIcon className="w-4 h-4 text-notion-muted" />
+                  : <EditIcon className="w-4 h-4 text-notion-muted" />
+                }
                 <h3 className="text-sm font-semibold text-notion-text capitalize">{fieldModalKey}</h3>
-                {fieldModalIsComplex && (
+                {fieldModalIsGallery ? (
+                  <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded-sm font-medium">
+                    {fieldModalGalleryItems.length} images
+                  </span>
+                ) : fieldModalIsComplex ? (
                   <span className="text-[10px] px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-sm font-medium">JSON</span>
-                )}
+                ) : null}
               </div>
               <button onClick={() => setFieldModalKey(null)} className="text-notion-muted hover:text-notion-text p-1 hover:bg-notion-hover rounded-sm transition-colors">
                 <CloseIcon className="w-4 h-4" />
               </button>
             </header>
-            <div className="flex-grow p-4 overflow-y-auto">
-              <textarea
-                className={`w-full h-60 p-3 text-sm border border-notion-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y bg-notion-sidebar/20 ${
-                  fieldModalIsComplex ? 'font-mono text-xs leading-relaxed' : 'leading-normal'
-                }`}
-                value={fieldModalValue}
-                onChange={(e) => setFieldModalValue(e.target.value)}
-                spellCheck={!fieldModalIsComplex}
-                placeholder={fieldModalIsComplex ? 'Edit JSON...' : 'Edit value...'}
-              />
-              {fieldModalIsComplex && (
-                <p className="text-[10px] text-notion-muted mt-2">
-                  💡 Edit as JSON. Array of objects (gallery, etc.) must be valid JSON format.
-                </p>
-              )}
-            </div>
-            <footer className="px-4 py-3 border-t border-notion-border flex justify-end gap-2 bg-gray-50">
-              <button
-                onClick={() => setFieldModalKey(null)}
-                className="px-3 py-1.5 text-sm text-notion-text border border-notion-border rounded-sm hover:bg-notion-hover transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleFieldModalSave}
-                className="px-4 py-1.5 text-sm text-white bg-notion-blue rounded-sm hover:bg-blue-600 transition-colors font-medium"
-              >
-                Save
-              </button>
-            </footer>
+
+            {fieldModalIsGallery ? (
+              <>
+                <div className="flex-grow overflow-y-auto p-4 custom-scrollbar">
+                  {fieldModalGalleryItems.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-notion-muted">
+                      <ImageIcon className="w-10 h-10 opacity-30 mb-3" />
+                      <p className="text-sm">No images in gallery</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {fieldModalGalleryItems.map((item, index) => {
+                        const imgKey = getGalleryImageKey(item);
+                        const imgSrc = item[imgKey] || '';
+                        const labelKey = 'label' in item ? 'label' : 'alt' in item ? 'alt' : 'title' in item ? 'title' : 'label';
+                        const label = item[labelKey] || '';
+                        return (
+                          <div 
+                            key={index}
+                            draggable
+                            onDragStart={() => handleGalleryDragStart(index)}
+                            onDragOver={(e) => handleGalleryDragOver(e, index)}
+                            onDragEnd={handleGalleryDragEnd}
+                            className={`group/card relative rounded-lg border transition-all cursor-grab active:cursor-grabbing ${
+                              galleryDragIndex === index 
+                                ? 'border-notion-blue shadow-md ring-2 ring-blue-200 scale-[0.97]' 
+                                : 'border-notion-border hover:border-notion-blue/40 hover:shadow-sm'
+                            }`}
+                          >
+                            <div className="aspect-square bg-gray-50 rounded-t-lg overflow-hidden relative">
+                              <div className="w-full h-full flex items-center justify-center bg-notion-sidebar/50">
+                                <div className="text-center px-2">
+                                  <ImageIcon className="w-6 h-6 text-notion-muted/40 mx-auto mb-1" />
+                                  <p className="text-[9px] text-notion-muted/60 truncate max-w-full">{imgSrc.split('/').pop()}</p>
+                                </div>
+                              </div>
+                              <span className="absolute top-1.5 left-1.5 text-[10px] bg-black/50 text-white px-1.5 py-0.5 rounded-full font-medium">
+                                {index + 1}
+                              </span>
+                              <button
+                                onClick={() => handleGalleryRemove(index)}
+                                className="absolute top-1.5 right-1.5 p-1 bg-red-500/80 hover:bg-red-600 text-white rounded-full opacity-0 group-hover/card:opacity-100 transition-opacity"
+                                title="Remove"
+                              >
+                                <CloseIcon className="w-3 h-3" />
+                              </button>
+                            </div>
+                            <div className="p-2 space-y-1">
+                              <input
+                                type="text"
+                                value={label}
+                                onChange={(e) => handleGalleryItemChange(index, labelKey, e.target.value)}
+                                placeholder="Label..."
+                                className="w-full text-xs bg-transparent border-b border-transparent focus:border-notion-blue focus:ring-0 py-0.5 px-0.5 text-notion-text placeholder-notion-muted/50 hover:bg-notion-hover/30 rounded-sm transition-colors"
+                              />
+                              <input
+                                type="text"
+                                value={imgSrc}
+                                onChange={(e) => handleGalleryItemChange(index, imgKey, e.target.value)}
+                                placeholder="/images/..."
+                                className="w-full text-[10px] font-mono bg-transparent border-b border-transparent focus:border-notion-blue focus:ring-0 py-0.5 px-0.5 text-notion-muted placeholder-notion-muted/30 hover:bg-notion-hover/30 rounded-sm transition-colors truncate"
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <button
+                        onClick={() => setIsGalleryPickerOpen(true)}
+                        className="aspect-square rounded-lg border-2 border-dashed border-notion-border hover:border-notion-blue/50 flex flex-col items-center justify-center gap-2 text-notion-muted hover:text-notion-blue transition-colors group/add"
+                      >
+                        <PlusIcon className="w-6 h-6 opacity-40 group-hover/add:opacity-70 transition-opacity" />
+                        <span className="text-[10px] font-medium">Add Image</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <footer className="px-4 py-3 border-t border-notion-border flex items-center justify-between bg-gray-50 flex-shrink-0">
+                  <p className="text-[10px] text-notion-muted">💡 Drag to reorder • Click × to remove</p>
+                  <div className="flex gap-2">
+                    <button onClick={() => setFieldModalKey(null)} className="px-3 py-1.5 text-sm text-notion-text border border-notion-border rounded-sm hover:bg-notion-hover transition-colors">Cancel</button>
+                    <button onClick={handleFieldModalSave} className="px-4 py-1.5 text-sm text-white bg-notion-blue rounded-sm hover:bg-blue-600 transition-colors font-medium">Save</button>
+                  </div>
+                </footer>
+              </>
+            ) : (
+              <>
+                <div className="flex-grow p-4 overflow-y-auto">
+                  <textarea
+                    className={`w-full h-60 p-3 text-sm border border-notion-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y bg-notion-sidebar/20 ${
+                      fieldModalIsComplex ? 'font-mono text-xs leading-relaxed' : 'leading-normal'
+                    }`}
+                    value={fieldModalValue}
+                    onChange={(e) => setFieldModalValue(e.target.value)}
+                    spellCheck={!fieldModalIsComplex}
+                    placeholder={fieldModalIsComplex ? 'Edit JSON...' : 'Edit value...'}
+                  />
+                  {fieldModalIsComplex && (
+                    <p className="text-[10px] text-notion-muted mt-2">💡 Edit as JSON format.</p>
+                  )}
+                </div>
+                <footer className="px-4 py-3 border-t border-notion-border flex justify-end gap-2 bg-gray-50 flex-shrink-0">
+                  <button onClick={() => setFieldModalKey(null)} className="px-3 py-1.5 text-sm text-notion-text border border-notion-border rounded-sm hover:bg-notion-hover transition-colors">Cancel</button>
+                  <button onClick={handleFieldModalSave} className="px-4 py-1.5 text-sm text-white bg-notion-blue rounded-sm hover:bg-blue-600 transition-colors font-medium">Save</button>
+                </footer>
+              </>
+            )}
           </div>
         </div>
       )}
