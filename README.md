@@ -1,12 +1,12 @@
 # Pageel CMS
 
-> **Version:** 1.2.0 | **Updated:** March 2026
+> **Version:** 1.2.1 | **Updated:** March 2026
 
 A powerful, client-side Content Management System (CMS) for managing Markdown/MDX content and images directly on **GitHub**, **Gitea**, or **Gogs** repositories. Built with **React 19** and **TypeScript**, featuring a modern Notion-inspired UI.
 
 <div align="center">
   <a href="https://pageel.com">
-    <img src="https://raw.githubusercontent.com/pageel/pageel-cms/main/.github/assets/pageel-logo.svg" width="200" alt="Pageel Logo">
+    <img src="https://raw.githubusercontent.com/pageel/pageel-cms/main/.github/assets/pageel-icon.svg" width="80" alt="Pageel Icon">
   </a>
 </div>
 
@@ -15,7 +15,7 @@ A powerful, client-side Content Management System (CMS) for managing Markdown/MD
   <p>Run entirely in your browser. No database. No backend.</p>
 
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.2.1-blue.svg)](CHANGELOG.md)
 ![Status](https://img.shields.io/badge/status-active-success.svg)
 [![GitHub](https://img.shields.io/badge/GitHub-supported-181717?logo=github&logoColor=white)](https://github.com)
 [![Astro](https://img.shields.io/badge/Astro-compatible-BC52EE?logo=astro&logoColor=white)](https://astro.build)

@@ -1,12 +1,12 @@
 # Pageel CMS
 
-> **Phiên bản:** 1.2.0 | **Cập nhật:** Tháng 3/2026
+> **Phiên bản:** 1.2.1 | **Cập nhật:** Tháng 3/2026
 
 Hệ quản trị nội dung (CMS) mạnh mẽ, chạy hoàn toàn trên trình duyệt (client-side) để quản lý nội dung Markdown/MDX và hình ảnh trực tiếp trên **GitHub**, **Gitea**, hoặc **Gogs**. Được xây dựng với **React 19** và **TypeScript**, mang lại giao diện hiện đại phong cách Notion.
 
 <div align="center">
   <a href="https://pageel.com">
-    <img src="https://raw.githubusercontent.com/pageel/pageel-cms/main/.github/assets/pageel-logo.svg" width="200" alt="Pageel Logo">
+    <img src="https://raw.githubusercontent.com/pageel/pageel-cms/main/.github/assets/pageel-icon.svg" width="80" alt="Pageel Icon">
   </a>
 </div>
 
@@ -15,7 +15,7 @@ Hệ quản trị nội dung (CMS) mạnh mẽ, chạy hoàn toàn trên trình 
   <p>Chạy hoàn toàn trên trình duyệt. Không database. Không backend.</p>
 
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.2.1-blue.svg)](CHANGELOG.md)
 ![Status](https://img.shields.io/badge/status-active-success.svg)
 [![GitHub](https://img.shields.io/badge/GitHub-supported-181717?logo=github&logoColor=white)](https://github.com)
 [![Astro](https://img.shields.io/badge/Astro-compatible-BC52EE?logo=astro&logoColor=white)](https://astro.build)

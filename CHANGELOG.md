@@ -11,6 +11,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.1] - 2026-03-24
+
+### Added
+
+- **Visual Gallery Editor** (WF-09): Frontmatter fields containing arrays of image objects (e.g., `gallery: [{src, label}]`) now open a visual grid editor instead of raw JSON.
+  - Drag-to-reorder with visual feedback
+  - Inline label and path editing per item
+  - Add images via existing image picker
+  - Delete items with hover-reveal × button
+- **Frontmatter Field Modal**: Click any frontmatter field in the right sidebar to open a full-width editing modal — supports text, arrays, and JSON for complex objects.
+- **GalleryThumbnail Component**: Loads real images from repos (public via CDN, private via blob API) with spinner and fallback.
+
+### Fixed
+
+- **BUG-16**: DirectoryPicker modal hidden behind NewCollectionModal/EditCollectionModal (z-index conflict z-50 → z-[60]).
+- **BUG-17**: Gallery fields displaying `[object Object]` — array-of-objects now correctly detected and rendered.
+- **PostImageSelectionModal z-index**: Raised to z-[70] to ensure it always overlays gallery editor modal (z-[60]).
+
+### Changed
+
+- **Version bump**: 1.1.0 → 1.2.1 across package.json, App.tsx, Sidebar.tsx, README.md, README.vi.md.
+- **README logo**: Replaced full logo (with text) with icon-only version for cleaner presentation.
+
+---
+
 ## [1.1.0] - 2026-03-17
 
 ### Added
@@ -145,7 +170,8 @@ First public release of Pageel CMS - a Git-based CMS for static & hybrid website
 
 ---
 
-[Unreleased]: https://github.com/pageel/pageel-cms/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/pageel/pageel-cms/compare/v1.2.1...HEAD
+[1.2.1]: https://github.com/pageel/pageel-cms/compare/v1.1.0...v1.2.1
 [1.1.0]: https://github.com/pageel/pageel-cms/compare/v1.1.0-beta.1...v1.1.0
 [1.1.0-beta.1]: https://github.com/pageel/pageel-cms/releases/tag/v1.1.0-beta.1
 [1.0.0]: https://github.com/pageel/pageel-cms/releases/tag/v1.0.0
