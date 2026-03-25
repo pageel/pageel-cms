@@ -2,12 +2,13 @@
  * POST /api/proxy/git
  * JSON proxy for IGitService methods (whitelist-controlled)
  * 
- * Request body: { action: string, params: Record<string, any> }
- * Response: JSON result from Git API
+ * v2.1: Reads Git credentials from session (Dynamic Session Credentials)
+ *       Falls back to env vars when session doesn't contain credentials.
  */
 
 import type { APIRoute } from 'astro';
 import * as git from '../../../lib/git-client';
+import { verifySession, resolveGitCredentials, COOKIE_NAME } from '../../../lib/session';
 
 // Whitelist of allowed actions
 const ALLOWED_ACTIONS = new Set([
@@ -25,8 +26,26 @@ const ALLOWED_ACTIONS = new Set([
   'getRepoDetails',
 ]);
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, cookies }) => {
   try {
+    // Resolve credentials from session
+    const sessionToken = cookies.get(COOKIE_NAME)?.value;
+    if (!sessionToken) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const session = await verifySession(sessionToken);
+    if (!session) {
+      return new Response(JSON.stringify({ error: 'Session expired' }), {
+        status: 401, headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const creds = resolveGitCredentials(session);
+    const config = git.createGitConfig(creds.token, creds.repo);
+
     const body = await request.json();
     const { action, params = {} } = body;
 
@@ -43,33 +62,35 @@ export const POST: APIRoute = async ({ request }) => {
     switch (action) {
       case 'scanForContentDirectories':
       case 'scanForImageDirectories':
+        result = await (git as any)[action](config);
+        break;
+
       case 'findProductionUrl':
       case 'getRepoDetails':
-        result = await (git as any)[action]();
+        result = await (git as any)[action](config);
         break;
 
       case 'getRepoContents':
       case 'listFiles':
       case 'getFileContent':
       case 'getFileSha':
-        result = await (git as any)[action](params.path);
+        result = await (git as any)[action](config, params.path);
         break;
 
       case 'getRepoTree':
-        result = await git.getRepoTree(params.path);
+        result = await git.getRepoTree(config, params.path);
         break;
 
       case 'createFileFromString':
-        result = await git.createFileFromString(params.path, params.content, params.commitMessage);
+        result = await git.createFileFromString(config, params.path, params.content, params.commitMessage);
         break;
 
       case 'updateFileContent':
-        result = await git.updateFileContent(params.path, params.content, params.commitMessage, params.sha);
+        result = await git.updateFileContent(config, params.path, params.content, params.commitMessage, params.sha);
         break;
 
-      // ⚠️ deleteFile: sha at position 2!
       case 'deleteFile':
-        result = await git.deleteFile(params.path, params.sha, params.commitMessage);
+        result = await git.deleteFile(config, params.path, params.sha, params.commitMessage);
         break;
 
       default:

@@ -2,7 +2,11 @@
  * Session management — HMAC-SHA256 signed cookies
  * 
  * Cookie format: base64(payload).base64(signature)
- * Payload: { user, exp }
+ * Payload: { user, exp, repo?, token? }
+ * 
+ * v2.1: Extended to support Dynamic Session Credentials (Multi-Tenant)
+ *       When CMS_REPO/GITHUB_TOKEN are missing from env, user supplies them
+ *       at login and they are stored encrypted inside the session cookie.
  */
 
 const COOKIE_NAME = 'pageel_session';
@@ -37,17 +41,35 @@ async function hmacVerify(payload: string, signature: string, secret: string): P
 export interface SessionPayload {
   user: string;
   exp: number;
+  /** Dynamic repo — only set when env CMS_REPO is missing */
+  repo?: string;
+  /** Dynamic token — only set when env GITHUB_TOKEN is missing */
+  token?: string;
+}
+
+/**
+ * Options for creating a session with dynamic credentials
+ */
+export interface CreateSessionOptions {
+  username: string;
+  repo?: string;
+  token?: string;
 }
 
 /**
  * Create a signed session token
  */
-export async function createSession(username: string): Promise<string> {
+export async function createSession(options: CreateSessionOptions): Promise<string> {
   const secret = getSecret();
   const payload: SessionPayload = {
-    user: username,
+    user: options.username,
     exp: Math.floor(Date.now() / 1000) + MAX_AGE,
   };
+
+  // Only embed credentials when env vars are missing (Dynamic Session mode)
+  if (options.repo) payload.repo = options.repo;
+  if (options.token) payload.token = options.token;
+
   const payloadStr = btoa(JSON.stringify(payload));
   const signature = await hmacSign(payloadStr, secret);
   return `${payloadStr}.${signature}`;
@@ -89,6 +111,29 @@ export function getSessionCookieOptions(isProd: boolean) {
     path: '/',
     maxAge: MAX_AGE,
   };
+}
+
+/**
+ * Resolve Git credentials: prefer env vars, fallback to session payload
+ */
+export function resolveGitCredentials(session: SessionPayload): {
+  token: string;
+  repo: string;
+} {
+  const envToken = import.meta.env.GITHUB_TOKEN || '';
+  const envRepo = import.meta.env.CMS_REPO || '';
+
+  return {
+    token: envToken || session.token || '',
+    repo: envRepo || session.repo || '',
+  };
+}
+
+/**
+ * Check if server has hardcoded Git env vars
+ */
+export function hasEnvGitConfig(): boolean {
+  return !!(import.meta.env.GITHUB_TOKEN && import.meta.env.CMS_REPO);
 }
 
 export { COOKIE_NAME };

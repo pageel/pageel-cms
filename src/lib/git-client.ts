@@ -1,13 +1,14 @@
 /**
  * Git API Client — Server-side GitHub/Gitea/Gogs API calls
  * 
- * Standalone implementation (no dependency on core/)
- * Used by proxy endpoints to make Git API calls with server-side token
+ * v2.1: Refactored to accept credentials as constructor params
+ *       instead of reading global env vars. This enables multi-tenant
+ *       where each user session has its own token/repo.
  */
 
 const GITHUB_API = 'https://api.github.com';
 
-interface GitClientConfig {
+export interface GitClientConfig {
   token: string;
   owner: string;
   repo: string;
@@ -15,18 +16,22 @@ interface GitClientConfig {
   instanceUrl?: string;
 }
 
-function getConfig(): GitClientConfig {
-  const token = import.meta.env.GITHUB_TOKEN;
-  const repoStr = import.meta.env.CMS_REPO || '';
+/**
+ * Create a GitClientConfig from token + repo string.
+ * Falls back to env vars if not provided.
+ */
+export function createGitConfig(token?: string, repo?: string): GitClientConfig {
+  const resolvedToken = token || import.meta.env.GITHUB_TOKEN || '';
+  const resolvedRepo = repo || import.meta.env.CMS_REPO || '';
   const service = import.meta.env.CMS_SERVICE || 'github';
   const instanceUrl = import.meta.env.CMS_INSTANCE_URL || '';
-  const [owner, repo] = repoStr.split('/');
+  const [owner, repoName] = resolvedRepo.split('/');
 
-  if (!token || !owner || !repo) {
-    throw new Error('Missing GITHUB_TOKEN or CMS_REPO env vars');
+  if (!resolvedToken || !owner || !repoName) {
+    throw new Error('Missing Git credentials (token or repo)');
   }
 
-  return { token, owner, repo, service, instanceUrl };
+  return { token: resolvedToken, owner, repo: repoName, service, instanceUrl };
 }
 
 function getBaseUrl(config: GitClientConfig): string {
@@ -36,8 +41,7 @@ function getBaseUrl(config: GitClientConfig): string {
   return GITHUB_API;
 }
 
-async function apiCall(path: string, options: RequestInit = {}): Promise<any> {
-  const config = getConfig();
+async function apiCall(config: GitClientConfig, path: string, options: RequestInit = {}): Promise<any> {
   const baseUrl = getBaseUrl(config);
   const url = `${baseUrl}${path}`;
 
@@ -64,22 +68,27 @@ async function apiCall(path: string, options: RequestInit = {}): Promise<any> {
   return response.text();
 }
 
-function repoPath(config?: GitClientConfig): string {
-  const c = config || getConfig();
-  return `/repos/${c.owner}/${c.repo}`;
+function repoPath(config: GitClientConfig): string {
+  return `/repos/${config.owner}/${config.repo}`;
 }
 
-// --- Exported API methods ---
+// --- Exported API methods (all accept config as first param) ---
 
-export async function getRepoContents(path: string) {
-  const config = getConfig();
-  return apiCall(`${repoPath(config)}/contents/${path}`);
+export async function verifyTokenAccess(config: GitClientConfig): Promise<boolean> {
+  try {
+    await apiCall(config, `${repoPath(config)}`);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
-export async function listFiles(path: string) {
-  // Use tree API for optimized listing
-  const config = getConfig();
-  const tree = await apiCall(`${repoPath(config)}/git/trees/HEAD?recursive=1`);
+export async function getRepoContents(config: GitClientConfig, path: string) {
+  return apiCall(config, `${repoPath(config)}/contents/${path}`);
+}
+
+export async function listFiles(config: GitClientConfig, path: string) {
+  const tree = await apiCall(config, `${repoPath(config)}/git/trees/HEAD?recursive=1`);
   const items = (tree.tree || [])
     .filter((item: any) => item.path.startsWith(path) && item.path !== path)
     .map((item: any) => ({
@@ -92,11 +101,9 @@ export async function listFiles(path: string) {
   return items;
 }
 
-export async function getFileContent(path: string) {
-  const config = getConfig();
-  const data = await apiCall(`${repoPath(config)}/contents/${path}`);
+export async function getFileContent(config: GitClientConfig, path: string) {
+  const data = await apiCall(config, `${repoPath(config)}/contents/${path}`);
   if (data.content && data.encoding === 'base64') {
-    // Proper UTF-8 decode (atob only handles ASCII)
     const binary = atob(data.content.replace(/\n/g, ''));
     const bytes = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i++) {
@@ -107,19 +114,17 @@ export async function getFileContent(path: string) {
   return data.content || '';
 }
 
-export async function getFileSha(path: string): Promise<string | null> {
+export async function getFileSha(config: GitClientConfig, path: string): Promise<string | null> {
   try {
-    const config = getConfig();
-    const data = await apiCall(`${repoPath(config)}/contents/${path}`);
+    const data = await apiCall(config, `${repoPath(config)}/contents/${path}`);
     return data.sha || null;
   } catch {
     return null;
   }
 }
 
-export async function createFileFromString(path: string, content: string, commitMessage: string) {
-  const config = getConfig();
-  return apiCall(`${repoPath(config)}/contents/${path}`, {
+export async function createFileFromString(config: GitClientConfig, path: string, content: string, commitMessage: string) {
+  return apiCall(config, `${repoPath(config)}/contents/${path}`, {
     method: 'PUT',
     body: JSON.stringify({
       message: commitMessage,
@@ -128,9 +133,8 @@ export async function createFileFromString(path: string, content: string, commit
   });
 }
 
-export async function updateFileContent(path: string, content: string, commitMessage: string, sha: string) {
-  const config = getConfig();
-  return apiCall(`${repoPath(config)}/contents/${path}`, {
+export async function updateFileContent(config: GitClientConfig, path: string, content: string, commitMessage: string, sha: string) {
+  return apiCall(config, `${repoPath(config)}/contents/${path}`, {
     method: 'PUT',
     body: JSON.stringify({
       message: commitMessage,
@@ -140,9 +144,8 @@ export async function updateFileContent(path: string, content: string, commitMes
   });
 }
 
-export async function deleteFile(path: string, sha: string, commitMessage: string) {
-  const config = getConfig();
-  return apiCall(`${repoPath(config)}/contents/${path}`, {
+export async function deleteFile(config: GitClientConfig, path: string, sha: string, commitMessage: string) {
+  return apiCall(config, `${repoPath(config)}/contents/${path}`, {
     method: 'DELETE',
     body: JSON.stringify({
       message: commitMessage,
@@ -151,10 +154,9 @@ export async function deleteFile(path: string, sha: string, commitMessage: strin
   });
 }
 
-export async function scanForContentDirectories(): Promise<string[]> {
-  const config = getConfig();
+export async function scanForContentDirectories(config: GitClientConfig): Promise<string[]> {
   try {
-    const tree = await apiCall(`${repoPath(config)}/git/trees/HEAD?recursive=1`);
+    const tree = await apiCall(config, `${repoPath(config)}/git/trees/HEAD?recursive=1`);
     const dirs = new Set<string>();
     for (const item of tree.tree || []) {
       if (item.type === 'blob' && /\.(md|mdx)$/i.test(item.path)) {
@@ -168,10 +170,9 @@ export async function scanForContentDirectories(): Promise<string[]> {
   }
 }
 
-export async function scanForImageDirectories(): Promise<string[]> {
-  const config = getConfig();
+export async function scanForImageDirectories(config: GitClientConfig): Promise<string[]> {
   try {
-    const tree = await apiCall(`${repoPath(config)}/git/trees/HEAD?recursive=1`);
+    const tree = await apiCall(config, `${repoPath(config)}/git/trees/HEAD?recursive=1`);
     const dirs = new Set<string>();
     for (const item of tree.tree || []) {
       if (item.type === 'blob' && /\.(jpg|jpeg|png|gif|webp|svg|avif)$/i.test(item.path)) {
@@ -185,9 +186,9 @@ export async function scanForImageDirectories(): Promise<string[]> {
   }
 }
 
-export async function findProductionUrl(): Promise<string | null> {
+export async function findProductionUrl(config: GitClientConfig): Promise<string | null> {
   try {
-    const content = await getFileContent('astro.config.mjs');
+    const content = await getFileContent(config, 'astro.config.mjs');
     const match = content.match(/site:\s*['"]([^'"]+)['"]/);
     return match ? match[1] : null;
   } catch {
@@ -195,10 +196,9 @@ export async function findProductionUrl(): Promise<string | null> {
   }
 }
 
-export async function getRepoTree(path?: string) {
-  const config = getConfig();
+export async function getRepoTree(config: GitClientConfig, path?: string) {
   const treePath = path || 'HEAD';
-  const data = await apiCall(`${repoPath(config)}/git/trees/${treePath}?recursive=1`);
+  const data = await apiCall(config, `${repoPath(config)}/git/trees/${treePath}?recursive=1`);
   return (data.tree || []).map((item: any) => ({
     path: item.path,
     name: item.path.split('/').pop(),
@@ -208,27 +208,24 @@ export async function getRepoTree(path?: string) {
   }));
 }
 
-export async function getRepoDetails() {
-  const config = getConfig();
-  return apiCall(`${repoPath(config)}`);
+export async function getRepoDetails(config: GitClientConfig) {
+  return apiCall(config, `${repoPath(config)}`);
 }
 
-export async function uploadFile(path: string, base64Content: string, commitMessage: string, sha?: string) {
-  const config = getConfig();
+export async function uploadFile(config: GitClientConfig, path: string, base64Content: string, commitMessage: string, sha?: string) {
   const body: any = {
     message: commitMessage,
     content: base64Content,
   };
   if (sha) body.sha = sha;
 
-  return apiCall(`${repoPath(config)}/contents/${path}`, {
+  return apiCall(config, `${repoPath(config)}/contents/${path}`, {
     method: 'PUT',
     body: JSON.stringify(body),
   });
 }
 
-export async function getFileAsBlob(path: string): Promise<Response> {
-  const config = getConfig();
+export async function getFileAsBlob(config: GitClientConfig, path: string): Promise<Response> {
   const baseUrl = getBaseUrl(config);
   
   // Use raw content endpoint

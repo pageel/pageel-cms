@@ -1,11 +1,16 @@
 /**
  * POST /api/auth/login
- * Verify credentials → set signed session cookie → redirect /cms
+ * Verify credentials → validate token/repo → set signed session cookie → redirect /cms
+ * 
+ * v2.1: Supports Dynamic Session Credentials
+ *       When env GITHUB_TOKEN/CMS_REPO are missing, accepts them from form
+ *       and validates against GitHub API before issuing session.
  */
 
 import type { APIRoute } from 'astro';
 import { verifyCredentials, checkRateLimit } from '../../../lib/auth';
-import { createSession, getSessionCookieOptions } from '../../../lib/session';
+import { createSession, getSessionCookieOptions, hasEnvGitConfig } from '../../../lib/session';
+import { createGitConfig, verifyTokenAccess } from '../../../lib/git-client';
 
 export const POST: APIRoute = async ({ request, cookies, redirect, clientAddress }) => {
   const ip = clientAddress || 'unknown';
@@ -30,8 +35,38 @@ export const POST: APIRoute = async ({ request, cookies, redirect, clientAddress
     return redirect('/login?error=Invalid credentials.');
   }
 
+  // --- Dynamic Session Credentials ---
+  const envHasGit = hasEnvGitConfig();
+  let dynamicRepo: string | undefined;
+  let dynamicToken: string | undefined;
+
+  if (!envHasGit) {
+    // Env vars missing — require user to provide them
+    dynamicRepo = formData.get('repo')?.toString() || '';
+    dynamicToken = formData.get('token')?.toString() || '';
+
+    if (!dynamicRepo || !dynamicToken) {
+      return redirect('/login?error=Repository and GitHub Token are required.');
+    }
+
+    // Validate token has access to the specified repo
+    try {
+      const testConfig = createGitConfig(dynamicToken, dynamicRepo);
+      const hasAccess = await verifyTokenAccess(testConfig);
+      if (!hasAccess) {
+        return redirect('/login?error=Token does not have access to this repository.');
+      }
+    } catch {
+      return redirect('/login?error=Invalid token or repository format (use owner/repo).');
+    }
+  }
+
   // Create session and set cookie
-  const token = await createSession(username);
+  const token = await createSession({
+    username,
+    repo: dynamicRepo,
+    token: dynamicToken,
+  });
   const isProd = import.meta.env.PROD;
   const cookieOpts = getSessionCookieOptions(isProd);
 

@@ -43,6 +43,7 @@ Hệ quản trị nội dung (CMS) nhẹ, tự host, sử dụng repository **Gi
 | 🏷️ **Typed Templates**    | Định nghĩa schema với các kiểu **String**, **Date**, **Boolean**, **Number**, **Array**, **Object** |
 | 🔍 **Smart Filtering**    | Tự động tạo bộ lọc thông minh dựa trên template                                                     |
 | 🔐 **Server-Side Auth**   | Env Auth với bcrypt — Git token không bao giờ rời khỏi server                                       |
+| 🔀 **Multi-Tenant**       | Một bản deploy, nhiều repo — mỗi user tự cung cấp token khi đăng nhập                                |
 | 🌐 **Đa ngôn ngữ**        | Hỗ trợ Tiếng Anh và Tiếng Việt (i18n ready)                                                         |
 | ⚡ **Optimistic Locking** | **SHA-check** ngăn chặn ghi đè dữ liệu khi nhiều người cùng sửa                                    |
 | 🚀 **Self-Hosted**        | Deploy trên VPS, Docker, hoặc serverless platform                                                    |
@@ -77,9 +78,10 @@ Hệ quản trị nội dung (CMS) nhẹ, tự host, sử dụng repository **Gi
 
 ### Mô hình bảo mật
 
-- **Không có token phía client**: Git PAT chỉ lưu trên server
+- **Không có token phía client**: Git PAT chỉ lưu trên server (env hoặc mã hóa trong session cookie)
 - **Bcrypt password hashing**: 12-round bcrypt với constant-time comparison
-- **HMAC-SHA256 sessions**: Signed cookies với HttpOnly + SameSite=Strict
+- **HMAC-SHA256 sessions**: Signed cookies với HttpOnly + SameSite=Strict + Secure
+- **Xác thực Token khi login**: Token động được kiểm tra với GitHub API trước khi tạo phiên
 - **Rate limiting**: 5 lần/phút cho mỗi IP
 - **Proxy pattern**: Mọi API call đều qua server — client không bao giờ truy cập GitHub API trực tiếp
 
@@ -113,9 +115,13 @@ Sửa file `.env`:
 CMS_USER=admin
 CMS_PASS_HASH="$2a$12$..."   # Xem docs/deployment.md để tạo hash
 CMS_SECRET=chuoi-ngau-nhien-toi-thieu-16-ky-tu
+
+# Tùy chọn — nếu bỏ trống, người dùng sẽ tự nhập tại trang login (chế độ Multi-Tenant)
 GITHUB_TOKEN=ghp_token_cua_ban
 CMS_REPO=username/repo
 ```
+
+> **💡 Hai chế độ:** Set `GITHUB_TOKEN` + `CMS_REPO` cho setup 1 repo cố định (**Server Mode**). Bỏ trống để mỗi user tự nhập token và repo khi đăng nhập (**Connect Mode** / Multi-Tenant).
 
 ### 3. Chạy Development Server
 

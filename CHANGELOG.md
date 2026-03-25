@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Dynamic Session Credentials (Multi-Tenant)**: When `GITHUB_TOKEN` and `CMS_REPO` are not set in environment variables, the login page displays additional fields for users to provide their own GitHub token and repository. Credentials are verified against the GitHub API before being stored securely in the HMAC-signed HttpOnly session cookie. This enables a single CMS deployment to serve multiple repositories/users.
+
 ### Fixed
 
 - **CMS Page Blank Issue**: Switched to Astro's declarative `client:only="react"` mounting directive instead of manual script injection for the React container to ensure proper hydration and fix blank screens in production.

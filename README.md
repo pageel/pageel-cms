@@ -43,6 +43,7 @@ A lightweight, self-hosted Content Management System that uses your **GitHub** r
 | 🏷️ **Typed Templates**    | Define schema with **String**, **Date**, **Boolean**, **Number**, **Array**, **Object** |
 | 🔍 **Smart Filtering**    | Auto-generated filter UI based on your template types                                   |
 | 🔐 **Server-Side Auth**   | Env Auth with bcrypt — your Git token never leaves the server                           |
+| 🔀 **Multi-Tenant**       | One deployment, multiple repos — each user provides their own token at login             |
 | 🌐 **i18n Ready**         | English and Vietnamese support                                                          |
 | ⚡ **Optimistic Locking** | **SHA-check** prevents overwriting concurrent changes                                   |
 | 🚀 **Self-Hosted**        | Deploy on any VPS, Docker, or serverless platform                                       |
@@ -77,9 +78,10 @@ A lightweight, self-hosted Content Management System that uses your **GitHub** r
 
 ### Security Model
 
-- **No client-side tokens**: Git PAT stored server-side only
+- **No client-side tokens**: Git PAT stored server-side only (env or encrypted in session cookie)
 - **Bcrypt password hashing**: 12-round bcrypt with constant-time comparison
-- **HMAC-SHA256 sessions**: Signed cookies with HttpOnly + SameSite=Strict
+- **HMAC-SHA256 sessions**: Signed cookies with HttpOnly + SameSite=Strict + Secure
+- **Token validation at login**: Dynamic tokens are verified against GitHub API before session is created
 - **Rate limiting**: 5 attempts per minute per IP
 - **Proxy pattern**: All Git API calls go through server — client never touches GitHub API directly
 
@@ -113,9 +115,13 @@ Edit `.env` with your credentials:
 CMS_USER=admin
 CMS_PASS_HASH="$2a$12$..."   # See docs/deployment.md for hash generation
 CMS_SECRET=your-random-secret-min-16-chars
+
+# Optional — if omitted, users provide these at login (Multi-Tenant mode)
 GITHUB_TOKEN=ghp_your_token
 CMS_REPO=username/repo
 ```
+
+> **💡 Two modes:** Set `GITHUB_TOKEN` + `CMS_REPO` for a dedicated single-repo setup (**Server Mode**). Leave them empty to let each user provide their own token and repo at login (**Connect Mode** / Multi-Tenant).
 
 ### 3. Run Development Server
 

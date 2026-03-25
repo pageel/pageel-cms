@@ -1,13 +1,34 @@
 /**
  * POST /api/proxy/upload
  * FormData proxy for file upload via Git API
+ * 
+ * v2.1: Uses session-resolved Git credentials
  */
 
 import type { APIRoute } from 'astro';
-import { uploadFile, getFileSha } from '../../../lib/git-client';
+import { uploadFile, getFileSha, createGitConfig } from '../../../lib/git-client';
+import { verifySession, resolveGitCredentials, COOKIE_NAME } from '../../../lib/session';
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, cookies }) => {
   try {
+    // Resolve credentials from session
+    const sessionToken = cookies.get(COOKIE_NAME)?.value;
+    if (!sessionToken) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const session = await verifySession(sessionToken);
+    if (!session) {
+      return new Response(JSON.stringify({ error: 'Session expired' }), {
+        status: 401, headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const creds = resolveGitCredentials(session);
+    const config = createGitConfig(creds.token, creds.repo);
+
     const formData = await request.formData();
     const path = formData.get('path')?.toString();
     const file = formData.get('file') as File | null;
@@ -32,10 +53,10 @@ export const POST: APIRoute = async ({ request }) => {
 
     // If no SHA provided, try to get existing file SHA (for update)
     if (!sha) {
-      sha = (await getFileSha(path)) || undefined;
+      sha = (await getFileSha(config, path)) || undefined;
     }
 
-    const result = await uploadFile(path, base64Content, commitMessage, sha);
+    const result = await uploadFile(config, path, base64Content, commitMessage, sha);
 
     return new Response(JSON.stringify(result), {
       status: 200,
