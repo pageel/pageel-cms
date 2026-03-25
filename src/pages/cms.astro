@@ -1,0 +1,17 @@
+---
+// CMS page — React app mounted client-side
+// Protected by middleware (requires session cookie)
+import '../index.css';
+import CmsClient from '../components/CmsClient';
+---
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pageel CMS</title>
+</head>
+<body>
+  <CmsClient client:only="react" />
+</body>
+</html>

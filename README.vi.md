@@ -5,14 +5,15 @@
 
   <h1>Pageel CMS</h1>
 
-  <p><strong>Git-native CMS cho Astro & Next.js</strong></p>
-  <p>Chạy hoàn toàn trên trình duyệt. Không database. Không backend.</p>
+  <p><strong>CMS nhẹ, tự host, nền tảng Git — native cho Astro</strong></p>
+  <p>Quản lý nội dung ngay nơi code của bạn. Không cần database.</p>
 
   [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-  [![Version](https://img.shields.io/badge/version-1.2.1-blue.svg)](CHANGELOG.md)
-  ![Status](https://img.shields.io/badge/status-active-success.svg)
+  [![Version](https://img.shields.io/badge/version-2.0.0--beta-blue.svg)](CHANGELOG.md)
+  ![Status](https://img.shields.io/badge/status-beta-yellow.svg)
   [![GitHub](https://img.shields.io/badge/GitHub-supported-181717?logo=github&logoColor=white)](https://github.com)
-  [![Astro](https://img.shields.io/badge/Astro-compatible-BC52EE?logo=astro&logoColor=white)](https://astro.build)
+  [![Astro](https://img.shields.io/badge/Astro-6-BC52EE?logo=astro&logoColor=white)](https://astro.build)
+  [![Node.js](https://img.shields.io/badge/Node.js-22+-339933?logo=node.js&logoColor=white)](https://nodejs.org)
 
   <br />
 
@@ -22,7 +23,7 @@
 
 <br />
 
-Hệ quản trị nội dung (CMS) mạnh mẽ, chạy hoàn toàn trên trình duyệt để quản lý nội dung Markdown/MDX và hình ảnh trực tiếp trên **GitHub**, **Gitea**, hoặc **Gogs**. Được xây dựng với **React 19** và **TypeScript**, mang lại giao diện hiện đại phong cách Notion.
+Hệ quản trị nội dung (CMS) nhẹ, tự host, sử dụng repository **GitHub** làm nơi lưu trữ nội dung. Không cần database — các file Markdown/MDX và hình ảnh nằm ngay trong repo của bạn. Xây dựng với **Astro 6** và **React 19**, xác thực server-side và giao diện phong cách Notion.
 
 ---
 
@@ -41,48 +42,46 @@ Hệ quản trị nội dung (CMS) mạnh mẽ, chạy hoàn toàn trên trình 
 | 📚 **Multi-Collection**   | Quản lý nhiều loại nội dung (Blog, Docs, Projects) trong một workspace                              |
 | 🏷️ **Typed Templates**    | Định nghĩa schema với các kiểu **String**, **Date**, **Boolean**, **Number**, **Array**, **Object** |
 | 🔍 **Smart Filtering**    | Tự động tạo bộ lọc thông minh dựa trên template                                                     |
-| 🔐 **No Backend**         | Chạy 100% trên browser, giao tiếp trực tiếp với Git APIs                                            |
-| 🔒 **Bảo mật**            | Mã hóa PAT bằng **AES-GCM** (Web Crypto API), lưu trong sessionStorage                              |
-| 🌍 **Đa nền tảng**        | Hỗ trợ **GitHub**, **Gitea**, và **Gogs** (self-hosted)                                             |
+| 🔐 **Server-Side Auth**   | Env Auth với bcrypt — Git token không bao giờ rời khỏi server                                       |
 | 🌐 **Đa ngôn ngữ**        | Hỗ trợ Tiếng Anh và Tiếng Việt (i18n ready)                                                         |
-| ⚡ **Optimistic Locking** | **SHA-check** ngăn chặn việc ghi đè dữ liệu khi nhiều người cùng sửa                                |
+| ⚡ **Optimistic Locking** | **SHA-check** ngăn chặn ghi đè dữ liệu khi nhiều người cùng sửa                                    |
+| 🚀 **Self-Hosted**        | Deploy trên VPS, Docker, hoặc serverless platform                                                    |
 
 ---
 
-## 🧭 Các Module chức năng
+## 🏗️ Kiến trúc (v2.0)
 
-### 1. 📝 Quản lý bài viết (`PostList`)
+```
+┌─────────────────────────────────────────────┐
+│              Browser (React SPA)            │
+│  Dashboard, PostList, Images, Templates     │
+│         ProxyGitAdapter → /api/proxy/*      │
+└─────────────┬───────────────────────────────┘
+              │ Cookie session (HMAC-SHA256)
+┌─────────────▼───────────────────────────────┐
+│           Astro SSR Server (Node.js)        │
+│  middleware.ts → session guard              │
+│  /api/auth/login → bcrypt verify            │
+│  /api/proxy/git → GitHub API (server-side)  │
+│  /api/proxy/upload → file upload via API    │
+│  /api/proxy/blob → binary file serving      │
+└─────────────────────────────────────────────┘
+```
 
-Trung tâm quản lý nội dung của bạn.
+### Tech Stack
 
-- **Chế độ xem:** Chuyển đổi giữa dạng bảng (table) hoặc dạng lưới (grid) trực quan.
-- **Bộ lọc nâng cao:** Lọc theo văn bản, khoảng thời gian, thẻ (tags), trạng thái (boolean) và số.
-- **Sắp xếp thông minh:** Sắp xếp theo bất kỳ trường nào có trong template.
-- **Thao tác nhanh:** Sửa frontmatter trực tiếp, trình soạn thảo Markdown split-pane, upload file.
-- **Trình soạn thảo kiểu WordPress:** Layout 2 cột — nội dung bên trái, bảng cài đặt frontmatter bên phải.
+![Astro](https://img.shields.io/badge/Astro-6-BC52EE?style=flat-square&logo=astro&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.0-38B2AC?style=flat-square&logo=tailwindcss&logoColor=white)
 
-### 2. 🖼️ Quản lý hình ảnh (`ImageList`)
+### Mô hình bảo mật
 
-Thư viện media chuyên dụng.
-
-- **Gallery View:** Dạng lưới với thumbnail lazy-loaded.
-- **Bulk Upload:** Kéo thả để upload nhiều ảnh cùng lúc.
-- **Auto Compression:** Nén ảnh phía client (tự cấu hình max size/width).
-- **Public URL:** Copy đường dẫn ảnh (tương đối hoặc tuyệt đối) chỉ với 1 click.
-
-### 3. 📋 Post Template (`TemplateGenerator`)
-
-Định nghĩa và validate cấu trúc nội dung.
-
-- **Visual Editor:** Định nghĩa các trường dữ liệu qua giao diện dropdown.
-- **Các kiểu hỗ trợ:**
-  - `String` (Nhập văn bản)
-  - `Date` (Chọn ngày)
-  - `Array` (Chọn nhiều thẻ)
-  - `Boolean` (Bật/tắt)
-  - `Number` (Nhập số)
-  - `Object` (Trình sửa JSON)
-- **Tạo Schema:** Tự động tạo schema từ bài viết có sẵn.
+- **Không có token phía client**: Git PAT chỉ lưu trên server
+- **Bcrypt password hashing**: 12-round bcrypt với constant-time comparison
+- **HMAC-SHA256 sessions**: Signed cookies với HttpOnly + SameSite=Strict
+- **Rate limiting**: 5 lần/phút cho mỗi IP
+- **Proxy pattern**: Mọi API call đều qua server — client không bao giờ truy cập GitHub API trực tiếp
 
 ---
 
@@ -90,67 +89,58 @@ Thư viện media chuyên dụng.
 
 ### Yêu cầu
 
-- Trình duyệt hiện đại (Chrome 80+, Firefox 75+, Safari 13.1+)
-- Node.js 20.19+ (nếu chạy local development)
-- Repository trên GitHub, Gitea, hoặc Gogs
+- Node.js >= 22.12.0
+- Repository GitHub chứa nội dung markdown
+- GitHub personal access token (fine-grained recommended)
 
 ### 1. Clone & Cài đặt
 
 ```bash
 git clone https://github.com/pageel/pageel-cms.git
-cd pageel-cms/core
+cd pageel-cms
 npm install
 ```
 
-### 2. Chạy Development Server
+### 2. Cấu hình môi trường
+
+```bash
+cp .env.example .env
+```
+
+Sửa file `.env`:
+
+```env
+CMS_USER=admin
+CMS_PASS_HASH="$2a$12$..."   # Xem docs/deployment.md để tạo hash
+CMS_SECRET=chuoi-ngau-nhien-toi-thieu-16-ky-tu
+GITHUB_TOKEN=ghp_token_cua_ban
+CMS_REPO=username/repo
+```
+
+### 3. Chạy Development Server
 
 ```bash
 npm run dev
 ```
 
-Mở [http://localhost:3000](http://localhost:3000) trên trình duyệt.
+Mở [http://localhost:4321](http://localhost:4321) — sẽ chuyển hướng đến `/login`.
 
-### 3. Tạo Access Token
+### 4. Tạo Password Hash
 
-| Nhà cung cấp   | Quyền hạn yêu cầu             |
-| :------------- | :---------------------------- |
-| **GitHub**     | **Contents** (Read and Write) |
-| **Gitea/Gogs** | **Repo** (Read and Write)     |
+```bash
+node -e "require('bcryptjs').hash('mat-khau-cua-ban', 12).then(h => console.log(h))"
+```
 
-### 4. Kết nối Repository
+Copy kết quả vào `CMS_PASS_HASH` trong file `.env`.
 
-1. Chọn dịch vụ Git của bạn.
-2. Nhập tên repository (ví dụ: `username/repo`).
-3. Dán access token.
-4. (Self-hosted) Nhập đường dẫn instance URL.
+### 5. Build Production
 
----
+```bash
+npm run build
+node dist/server/entry.mjs
+```
 
-## 🏗️ Kiến trúc kỹ thuật
-
-### Tech Stack
-
-![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?style=flat-square&logo=typescript&logoColor=white)
-![Vite](https://img.shields.io/badge/Vite-7.3-646CFF?style=flat-square&logo=vite&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.0-38B2AC?style=flat-square&logo=tailwindcss&logoColor=white)
-
-### Các mẫu thiết kế cốt lõi (Design Patterns)
-
-**1. Adapter Pattern (`IGitService`)**
-Trừu tượng hóa các thao tác Git cho GitHub (`GithubAdapter`), Gitea (`GiteaAdapter`), và Gogs (`GogsAdapter`).
-
-**2. Client-Side Encryption**
-
-- Personal Access Tokens (PAT) được mã hóa bằng **AES-GCM**.
-- Enrollment key được tạo ngẫu nhiên qua `crypto.getRandomValues()`.
-- Không có dữ liệu nào được gửi về server của chúng tôi.
-
-**3. Quản lý trạng thái (State Management)**
-
-- **Zustand** cho trạng thái toàn cục (global state).
-- **IndexedDB** / **localStorage** cho settings và cache.
-- **URL Query Params** cho trạng thái deep linking.
+Xem [docs/deployment.md](docs/deployment.md) để biết cách deploy lên VPS, Docker, và Vercel.
 
 ---
 
@@ -165,9 +155,9 @@ Trừu tượng hóa các thao tác Git cho GitHub (`GithubAdapter`), Gitea (`Gi
 
 ---
 
-## 🤝 Đóng góp (Contributing)
+## 🤝 Đóng góp
 
-Chúng tôi rất hoan nghênh mọi đóng góp! Xem [Hướng dẫn đóng góp](./docs/guides/CONTRIBUTING.md) để biết thêm chi tiết.
+Chúng tôi hoan nghênh mọi đóng góp! Xem [Hướng dẫn đóng góp](./docs/guides/CONTRIBUTING.md).
 
 1. Fork repository
 2. Tạo feature branch (`git checkout -b feature/tinh-nang-moi`)
@@ -177,7 +167,7 @@ Chúng tôi rất hoan nghênh mọi đóng góp! Xem [Hướng dẫn đóng gó
 
 ---
 
-## 📄 Bản quyền (License)
+## 📄 Bản quyền
 
 Dự án này được cấp phép theo **MIT License**. Xem file [LICENSES.md](./LICENSES.md) để biết thêm chi tiết.
 

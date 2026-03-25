@@ -9,6 +9,67 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **CMS Page Blank Issue**: Switched to Astro's declarative `client:only="react"` mounting directive instead of manual script injection for the React container to ensure proper hydration and fix blank screens in production.
+
+### Changed
+
+- **Project structure**: Flattened `astro/` subdirectory to repo root (zero-config deploy)
+- **Adapter**: Default adapter switched from `@astrojs/node` to `@astrojs/vercel`
+- **`@astrojs/node`** moved to devDependencies (for local dev only)
+
+### Removed
+
+- **`vercel.json`**: No longer needed (Vercel auto-detects Astro at root)
+
+---
+
+## [2.0.0-beta.0] - 2026-03-25
+
+### ⚠️ BREAKING CHANGES
+
+- **Architecture migration**: Vite SPA → Astro 6 SSR application
+- **Auth model**: Client-side token paste → Server-side Env Auth (bcrypt)
+- **Directory structure**: App at repo root (flat structure)
+- **Removed**: Gitea/Gogs support (GitHub only for now)
+- **Removed**: Client-side crypto (AES-GCM token encryption)
+- **Removed**: `GitServiceConnect` token paste component
+
+### Added
+
+- **Astro 6 SSR** with Node.js standalone adapter
+- **Server-side authentication**: Username/password via environment variables with bcrypt hashing
+- **HMAC-SHA256 session cookies**: HttpOnly, SameSite=Strict, Secure
+- **API proxy layer**: `/api/proxy/git`, `/api/proxy/upload`, `/api/proxy/blob` — client never touches GitHub API directly
+- **Rate limiting**: 5 login attempts per minute per IP
+- **Constant-time comparison**: Prevents timing attacks on username validation
+- **Smart env resolution**: 3-tier bcrypt hash loading (import.meta.env → process.env → raw .env file)
+- **Deployment guide**: `docs/deployment.md` covering VPS, Docker, and Vercel
+- **npm bundled libraries**: `marked`, `dompurify`, `jszip`, `js-yaml` (replaced CDN globals)
+
+### Changed
+
+- **Route**: `/admin` → `/cms` (security-by-obscurity)
+- **Version**: All UI references updated to v2.0
+- **useSessionRestore**: Rewritten for Env Auth — no token paste, no crypto, no localStorage
+- **App.tsx**: Simplified — always-authenticated view when user reaches `/cms`
+
+### Removed
+
+- `core/` directory (legacy Vite SPA) — moved to `reference/` outside repo
+- `GitServiceConnect.tsx` (token paste form)
+- `githubService.ts`, `giteaService.ts`, `gogsService.ts` (client-side Git adapters)
+- `baseGitService.ts`, `baseGiteaService.ts` (base classes)
+- `crypto.ts` (AES-GCM token encryption)
+
+### Security
+
+- Git token stored server-side only (environment variable)
+- No client-side token storage (removed localStorage/sessionStorage)
+- Middleware guards `/cms` and `/api/proxy/*` routes
+- Session cookie with proper security flags
+
 ---
 
 ## [1.2.1] - 2026-03-24
@@ -170,7 +231,8 @@ First public release of Pageel CMS - a Git-based CMS for static & hybrid website
 
 ---
 
-[Unreleased]: https://github.com/pageel/pageel-cms/compare/v1.2.1...HEAD
+[Unreleased]: https://github.com/pageel/pageel-cms/compare/v2.0.0-beta.0...HEAD
+[2.0.0-beta.0]: https://github.com/pageel/pageel-cms/compare/v1.2.1...v2.0.0-beta.0
 [1.2.1]: https://github.com/pageel/pageel-cms/compare/v1.1.0...v1.2.1
 [1.1.0]: https://github.com/pageel/pageel-cms/compare/v1.1.0-beta.1...v1.1.0
 [1.1.0-beta.1]: https://github.com/pageel/pageel-cms/releases/tag/v1.1.0-beta.1

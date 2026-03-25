@@ -5,14 +5,15 @@
 
   <h1>Pageel CMS</h1>
 
-  <p><strong>Git-native CMS for Astro & Next.js</strong></p>
-  <p>Run entirely in your browser. No database. No backend.</p>
+  <p><strong>A lightweight, self-hosted and Git-based CMS native for Astro</strong></p>
+  <p>Manage your content where your code lives. No database required.</p>
 
   [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-  [![Version](https://img.shields.io/badge/version-1.2.1-blue.svg)](CHANGELOG.md)
-  ![Status](https://img.shields.io/badge/status-active-success.svg)
+  [![Version](https://img.shields.io/badge/version-2.0.0--beta-blue.svg)](CHANGELOG.md)
+  ![Status](https://img.shields.io/badge/status-beta-yellow.svg)
   [![GitHub](https://img.shields.io/badge/GitHub-supported-181717?logo=github&logoColor=white)](https://github.com)
-  [![Astro](https://img.shields.io/badge/Astro-compatible-BC52EE?logo=astro&logoColor=white)](https://astro.build)
+  [![Astro](https://img.shields.io/badge/Astro-6-BC52EE?logo=astro&logoColor=white)](https://astro.build)
+  [![Node.js](https://img.shields.io/badge/Node.js-22+-339933?logo=node.js&logoColor=white)](https://nodejs.org)
 
   <br />
 
@@ -22,7 +23,7 @@
 
 <br />
 
-A powerful, client-side Content Management System for managing Markdown/MDX content and images directly on **GitHub**, **Gitea**, or **Gogs** repositories. Built with **React 19** and **TypeScript**, featuring a modern Notion-inspired UI.
+A lightweight, self-hosted Content Management System that uses your **GitHub** repository as the content backend. No external database — your Markdown/MDX files and images live right in your repo. Built with **Astro 6** and **React 19**, featuring server-side authentication and a Notion-inspired editing experience.
 
 ---
 
@@ -41,48 +42,46 @@ A powerful, client-side Content Management System for managing Markdown/MDX cont
 | 📚 **Multi-Collection**   | Manage multiple content types (Blog, Docs, Projects) in one workspace                   |
 | 🏷️ **Typed Templates**    | Define schema with **String**, **Date**, **Boolean**, **Number**, **Array**, **Object** |
 | 🔍 **Smart Filtering**    | Auto-generated filter UI based on your template types                                   |
-| 🔐 **No Backend**         | Runs entirely in browser, communicates directly with Git APIs                           |
-| 🔒 **Secure**             | PAT encrypted with **AES-GCM** (Web Crypto API), stored in sessionStorage               |
-| 🌍 **Multi-Platform**     | Supports **GitHub**, **Gitea**, and **Gogs** (self-hosted)                              |
+| 🔐 **Server-Side Auth**   | Env Auth with bcrypt — your Git token never leaves the server                           |
 | 🌐 **i18n Ready**         | English and Vietnamese support                                                          |
 | ⚡ **Optimistic Locking** | **SHA-check** prevents overwriting concurrent changes                                   |
+| 🚀 **Self-Hosted**        | Deploy on any VPS, Docker, or serverless platform                                       |
 
 ---
 
-## 🧭 Application Modules
+## 🏗️ Architecture (v2.0)
 
-### 1. 📝 Manage Posts (`PostList`)
+```
+┌─────────────────────────────────────────────┐
+│              Browser (React SPA)            │
+│  Dashboard, PostList, Images, Templates     │
+│         ProxyGitAdapter → /api/proxy/*      │
+└─────────────┬───────────────────────────────┘
+              │ Cookie session (HMAC-SHA256)
+┌─────────────▼───────────────────────────────┐
+│           Astro SSR Server (Node.js)        │
+│  middleware.ts → session guard              │
+│  /api/auth/login → bcrypt verify            │
+│  /api/proxy/git → GitHub API (server-side)  │
+│  /api/proxy/upload → file upload via API    │
+│  /api/proxy/blob → binary file serving      │
+└─────────────────────────────────────────────┘
+```
 
-The central hub for content management.
+### Tech Stack
 
-- **View Modes:** Switch between dense data table or visual card grid.
-- **Advanced Filtering:** Filter by text, date range, tags, booleans, and numbers.
-- **Smart Sort:** Sort by any field defined in your template.
-- **Quick Actions:** Edit frontmatter inline, split-pane Markdown editor, upload/replace files.
-- **WordPress-style Editor:** 2-column layout — content on the left, frontmatter settings panel on the right.
+![Astro](https://img.shields.io/badge/Astro-6-BC52EE?style=flat-square&logo=astro&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.0-38B2AC?style=flat-square&logo=tailwindcss&logoColor=white)
 
-### 2. 🖼️ Manage Images (`ImageList`)
+### Security Model
 
-Dedicated asset library for managing media files.
-
-- **Gallery View:** Visual grid with lazy-loaded thumbnails.
-- **Bulk Upload:** Drag & drop multiple images.
-- **Auto Compression:** Client-side optimization (configurable max size/width).
-- **Public URL:** One-click copy for absolute or relative paths.
-
-### 3. 📋 Post Template (`TemplateGenerator`)
-
-Define and validate content structure.
-
-- **Visual Editor:** Define fields and types via dropdown UI.
-- **Supported Types:**
-  - `String` (Text input)
-  - `Date` (Date picker)
-  - `Array` (Multi-select tags)
-  - `Boolean` (Toggle switch)
-  - `Number` (Numeric input)
-  - `Object` (JSON editor)
-- **Schema Generation:** Auto-generate schema from existing posts.
+- **No client-side tokens**: Git PAT stored server-side only
+- **Bcrypt password hashing**: 12-round bcrypt with constant-time comparison
+- **HMAC-SHA256 sessions**: Signed cookies with HttpOnly + SameSite=Strict
+- **Rate limiting**: 5 attempts per minute per IP
+- **Proxy pattern**: All Git API calls go through server — client never touches GitHub API directly
 
 ---
 
@@ -90,67 +89,58 @@ Define and validate content structure.
 
 ### Prerequisites
 
-- Modern browser (Chrome 80+, Firefox 75+, Safari 13.1+)
-- Node.js 20.19+ (for local development)
-- Git repository on GitHub, Gitea, or Gogs
+- Node.js >= 22.12.0
+- A GitHub repository with markdown content
+- A GitHub personal access token (fine-grained recommended)
 
 ### 1. Clone & Install
 
 ```bash
 git clone https://github.com/pageel/pageel-cms.git
-cd pageel-cms/core
+cd pageel-cms
 npm install
 ```
 
-### 2. Run Development Server
+### 2. Configure Environment
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` with your credentials:
+
+```env
+CMS_USER=admin
+CMS_PASS_HASH="$2a$12$..."   # See docs/deployment.md for hash generation
+CMS_SECRET=your-random-secret-min-16-chars
+GITHUB_TOKEN=ghp_your_token
+CMS_REPO=username/repo
+```
+
+### 3. Run Development Server
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:4321](http://localhost:4321) — you'll be redirected to `/login`.
 
-### 3. Generate Access Token
+### 4. Generate Password Hash
 
-| Provider       | Permissions Required          |
-| :------------- | :---------------------------- |
-| **GitHub**     | **Contents** (Read and Write) |
-| **Gitea/Gogs** | **Repo** (Read and Write)     |
+```bash
+node -e "require('bcryptjs').hash('your-password', 12).then(h => console.log(h))"
+```
 
-### 4. Connect Repository
+Copy the output to `CMS_PASS_HASH` in your `.env` file.
 
-1. Select your Git service.
-2. Enter repository (e.g., `username/repo`).
-3. Paste your access token.
-4. (Self-hosted) Enter instance URL.
+### 5. Production Build
 
----
+```bash
+npm run build
+node dist/server/entry.mjs
+```
 
-## 🏗️ Technical Architecture
-
-### Tech Stack
-
-![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?style=flat-square&logo=typescript&logoColor=white)
-![Vite](https://img.shields.io/badge/Vite-7.3-646CFF?style=flat-square&logo=vite&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.0-38B2AC?style=flat-square&logo=tailwindcss&logoColor=white)
-
-### Core Design Patterns
-
-**1. Adapter Pattern (`IGitService`)**
-Abstracts Git operations for GitHub (`GithubAdapter`), Gitea (`GiteaAdapter`), and Gogs (`GogsAdapter`).
-
-**2. Client-Side Encryption**
-
-- Personal Access Tokens (PAT) are encrypted using **AES-GCM**.
-- Enrollment key is generated via `crypto.getRandomValues()`.
-- Nothing is ever sent to our servers.
-
-**3. State Management**
-
-- **Zustand** for global app state.
-- **IndexedDB** / **localStorage** for settings and cache.
-- **URL Query Params** for deep linking state.
+See [docs/deployment.md](docs/deployment.md) for VPS, Docker, and Vercel deployment guides.
 
 ---
 

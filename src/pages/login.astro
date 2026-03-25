@@ -1,0 +1,198 @@
+---
+import { verifySession } from '../lib/session';
+
+// If already authenticated, redirect to CMS
+const sessionCookie = Astro.cookies.get('pageel_session')?.value;
+if (sessionCookie) {
+  const session = await verifySession(sessionCookie);
+  if (session) {
+    return Astro.redirect('/cms');
+  }
+}
+
+// Handle login error message from query params
+const error = Astro.url.searchParams.get('error') || '';
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login — Pageel CMS</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #fafafa;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-container {
+      width: 100%;
+      max-width: 380px;
+      padding: 2rem;
+    }
+
+    .logo-section {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .logo-icon {
+      width: 48px;
+      height: 48px;
+      background: white;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    .logo-icon svg {
+      width: 28px;
+      height: 28px;
+    }
+
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #111;
+      margin-bottom: 0.25rem;
+    }
+
+    .subtitle {
+      font-size: 0.8rem;
+      color: #888;
+    }
+
+    .form-card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+
+    .field {
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #555;
+      margin-bottom: 0.35rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 0.55rem 0.75rem;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      color: #111;
+      background: #fafafa;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+      background: white;
+    }
+
+    .error-msg {
+      background: #fef2f2;
+      color: #dc2626;
+      font-size: 0.8rem;
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      border: 1px solid #fecaca;
+    }
+
+    button[type="submit"] {
+      width: 100%;
+      padding: 0.6rem;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    button[type="submit"]:hover {
+      background: #1d4ed8;
+    }
+
+    button[type="submit"]:active {
+      transform: scale(0.99);
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: 0.7rem;
+      color: #bbb;
+    }
+
+    .footer a {
+      color: #888;
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="logo-section">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M9.315 7.584C12.195 3.883 16.695 1.5 21.75 1.5a.75.75 0 01.75.75c0 5.056-2.383 9.555-6.084 12.436h.001c-1.228 1.65-2.82 3.043-4.66 4.102l-1.554.894a.75.75 0 01-1.077-.925l1.625-3.525-3.525 1.625a.75.75 0 01-.925-1.077l.894-1.554c1.059-1.84 2.453-3.432 4.102-4.66zm-5.12 11.232a.75.75 0 00-.75.75v3a.75.75 0 00.75.75h3a.75.75 0 00.75-.75v-3a.75.75 0 00-.75-.75h-3z" fill="#FF5D01" fill-rule="evenodd" clip-rule="evenodd"/>
+        </svg>
+      </div>
+      <h1>Pageel CMS</h1>
+      <p class="subtitle">Sign in to manage your content</p>
+    </div>
+
+    <div class="form-card">
+      {error && <div class="error-msg">{error}</div>}
+      
+      <form method="POST" action="/api/auth/login">
+        <div class="field">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" required autocomplete="username" autofocus />
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" required autocomplete="current-password" />
+        </div>
+        <button type="submit">Sign In</button>
+      </form>
+    </div>
+
+    <div class="footer">
+      <a href="https://github.com/pageel/pageel-cms" target="_blank">Pageel CMS</a> — Env Auth Mode
+    </div>
+  </div>
+</body>
+</html>
