@@ -136,4 +136,11 @@ export function hasEnvGitConfig(): boolean {
   return !!(import.meta.env.GITHUB_TOKEN && import.meta.env.CMS_REPO);
 }
 
+/**
+ * Check if server has hardcoded auth credentials (CMS_USER + CMS_PASS_HASH)
+ */
+export function hasEnvAuth(): boolean {
+  return !!(import.meta.env.CMS_USER);
+}
+
 export { COOKIE_NAME };

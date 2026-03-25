@@ -1,5 +1,5 @@
 ---
-import { verifySession, hasEnvGitConfig } from '../lib/session';
+import { verifySession, hasEnvGitConfig, hasEnvAuth } from '../lib/session';
 
 // If already authenticated, redirect to CMS
 const sessionCookie = Astro.cookies.get('pageel_session')?.value;
@@ -15,6 +15,8 @@ const error = Astro.url.searchParams.get('error') || '';
 
 // Check if server has hardcoded Git config
 const envGitConfigured = hasEnvGitConfig();
+// Check if server has hardcoded auth credentials
+const envAuthConfigured = hasEnvAuth();
 ---
 
 <!DOCTYPE html>
@@ -177,6 +179,15 @@ const envGitConfigured = hasEnvGitConfig();
       margin-top: 0.25rem;
     }
 
+    .field.disabled {
+      opacity: 0.45;
+    }
+
+    .field.disabled input {
+      cursor: not-allowed;
+      background: #f0f0f0;
+    }
+
     .footer {
       text-align: center;
       margin-top: 1.5rem;
@@ -251,21 +262,36 @@ const envGitConfigured = hasEnvGitConfig();
             <div class="divider"><span>Credentials</span></div>
           </>
         )}
-        <div class="field">
-          <label for="username">Username</label>
-          <input type="text" id="username" name="username" required autocomplete="username" autofocus />
-        </div>
-        <div class="field">
-          <label for="password">Password</label>
-          <input type="password" id="password" name="password" required autocomplete="current-password" />
-        </div>
-        <button type="submit">Sign In</button>
+        {envAuthConfigured ? (
+          <>
+            <div class="field">
+              <label for="username">Username</label>
+              <input type="text" id="username" name="username" required autocomplete="username" autofocus />
+            </div>
+            <div class="field">
+              <label for="password">Password</label>
+              <input type="password" id="password" name="password" required autocomplete="current-password" />
+            </div>
+          </>
+        ) : (
+          <>
+            <div class="field disabled">
+              <label for="username">Username</label>
+              <input type="text" id="username" name="username" disabled placeholder="Not required (Open Mode)" />
+            </div>
+            <div class="field disabled">
+              <label for="password">Password</label>
+              <input type="password" id="password" name="password" disabled placeholder="Not required (Open Mode)" />
+            </div>
+          </>
+        )}
+        <button type="submit">{envAuthConfigured ? 'Sign In' : 'Connect'}</button>
       </form>
     </div>
 
     <div class="footer">
       <a href="https://github.com/pageel/pageel-cms" target="_blank">Pageel CMS</a>
-      {envGitConfigured ? ' — Server Mode' : ' — Connect Mode'}
+      {envGitConfigured ? ' — Server Mode' : envAuthConfigured ? ' — Connect Mode' : ' — Open Mode'}
     </div>
   </div>
 </body>

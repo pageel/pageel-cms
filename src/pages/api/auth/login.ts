@@ -2,14 +2,15 @@
  * POST /api/auth/login
  * Verify credentials → validate token/repo → set signed session cookie → redirect /cms
  * 
- * v2.1: Supports Dynamic Session Credentials
- *       When env GITHUB_TOKEN/CMS_REPO are missing, accepts them from form
- *       and validates against GitHub API before issuing session.
+ * v2.1: Supports 3 modes:
+ *   - Server Mode: CMS_USER + GITHUB_TOKEN set → password auth only
+ *   - Connect Mode: CMS_USER set, GITHUB_TOKEN missing → password auth + user-provided token
+ *   - Open Mode: CMS_USER not set → skip password, validate GitHub token only
  */
 
 import type { APIRoute } from 'astro';
 import { verifyCredentials, checkRateLimit } from '../../../lib/auth';
-import { createSession, getSessionCookieOptions, hasEnvGitConfig } from '../../../lib/session';
+import { createSession, getSessionCookieOptions, hasEnvGitConfig, hasEnvAuth } from '../../../lib/session';
 import { createGitConfig, verifyTokenAccess } from '../../../lib/git-client';
 
 export const POST: APIRoute = async ({ request, cookies, redirect, clientAddress }) => {
@@ -25,17 +26,21 @@ export const POST: APIRoute = async ({ request, cookies, redirect, clientAddress
   const username = formData.get('username')?.toString() || '';
   const password = formData.get('password')?.toString() || '';
 
-  if (!username || !password) {
-    return redirect('/login?error=Username and password are required.');
+  const envHasAuth = hasEnvAuth();
+
+  // --- Password verification (Server Mode & Connect Mode only) ---
+  if (envHasAuth) {
+    if (!username || !password) {
+      return redirect('/login?error=Username and password are required.');
+    }
+
+    const valid = await verifyCredentials(username, password);
+    if (!valid) {
+      return redirect('/login?error=Invalid credentials.');
+    }
   }
 
-  // Verify credentials
-  const valid = await verifyCredentials(username, password);
-  if (!valid) {
-    return redirect('/login?error=Invalid credentials.');
-  }
-
-  // --- Dynamic Session Credentials ---
+  // --- Dynamic Session Credentials (Connect Mode & Open Mode) ---
   const envHasGit = hasEnvGitConfig();
   let dynamicRepo: string | undefined;
   let dynamicToken: string | undefined;
@@ -62,8 +67,9 @@ export const POST: APIRoute = async ({ request, cookies, redirect, clientAddress
   }
 
   // Create session and set cookie
+  const sessionUser = envHasAuth ? username : (dynamicRepo || 'anonymous');
   const token = await createSession({
-    username,
+    username: sessionUser,
     repo: dynamicRepo,
     token: dynamicToken,
   });
