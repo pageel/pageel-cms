@@ -97,7 +97,7 @@ A lightweight, self-hosted Content Management System that uses your **GitHub** r
 
 ```bash
 git clone https://github.com/pageel/pageel-cms.git
-cd pageel-cms/astro
+cd pageel-cms
 npm install
 ```
 

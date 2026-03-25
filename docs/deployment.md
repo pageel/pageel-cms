@@ -1,5 +1,7 @@
 # Deployment Guide
 
+> **Version**: 2.0.0-beta | **Updated**: 2026-03-25
+
 ## Prerequisites
 
 - Node.js >= 22.12.0
@@ -60,17 +62,82 @@ Or any random string generator — minimum 16 characters.
 
 ---
 
+## Deploy to Vercel (Recommended) ✅
+
+Zero-configuration deployment — just import and deploy.
+
+### 1. Import Repository
+
+1. Go to [vercel.com](https://vercel.com) → **Add New Project**
+2. Select your GitHub repository
+3. Vercel auto-detects **Astro** framework → Click **Deploy**
+
+> 💡 No `vercel.json` or Root Directory config needed — the Astro app lives at repo root.
+
+### 2. Set Environment Variables
+
+In **Vercel Dashboard → Project → Settings → Environment Variables**:
+
+```
+CMS_USER       = admin
+CMS_PASS_HASH  = $2a$12$...   ← paste as-is, Vercel doesn't corrupt $ chars
+CMS_SECRET     = your-random-secret
+GITHUB_TOKEN   = ghp_xxx
+CMS_REPO       = owner/repo
+CMS_SERVICE    = github
+```
+
+> **Note:** Vercel environment variables are NOT processed by dotenv-expand,
+> so bcrypt hashes with `$` characters work without escaping.
+
+### 3. Redeploy
+
+After setting env vars, trigger a redeploy:
+- **Deployments** tab → latest deployment → **Redeploy**
+
+### Vercel Notes
+
+- **Rate limiting** resets on each cold start (serverless function lifecycle)
+- **Session storage** uses Vercel's default (check Astro session docs for Vercel adapter)
+- **File system access** is read-only — the `.env` file fallback won't work (not needed since Vercel provides env vars natively)
+
+---
+
 ## Deploy to VPS / Docker
 
-### 1. Build
+For self-hosted deployment, switch to the Node.js adapter.
+
+### 1. Switch Adapter
+
+In `astro.config.mjs`, replace the Vercel adapter with Node:
+
+```diff
+- import vercel from '@astrojs/vercel';
++ import node from '@astrojs/node';
+
+  export default defineConfig({
+    output: 'server',
+    integrations: [react()],
+-   adapter: vercel(),
++   adapter: node({ mode: 'standalone' }),
+    vite: {
+      plugins: [tailwindcss()],
+    },
+  });
+```
 
 ```bash
-cd astro
+npm install @astrojs/node
+```
+
+### 2. Build
+
+```bash
 npm install
 npm run build
 ```
 
-### 2. Run
+### 3. Run
 
 ```bash
 # Set environment variables
@@ -86,16 +153,16 @@ node dist/server/entry.mjs
 
 Server runs on `http://localhost:4321` by default.
 
-### 3. With Docker (example)
+### 4. With Docker
 
 ```dockerfile
 FROM node:22-alpine
 WORKDIR /app
 
-COPY astro/package*.json ./
+COPY package*.json ./
 RUN npm ci --omit=dev
 
-COPY astro/ ./
+COPY . .
 RUN npm run build
 
 ENV HOST=0.0.0.0
@@ -105,13 +172,13 @@ EXPOSE 4321
 CMD ["node", "dist/server/entry.mjs"]
 ```
 
-### 4. With PM2
+### 5. With PM2
 
 ```bash
 pm2 start dist/server/entry.mjs --name pageel-cms
 ```
 
-### 5. Reverse Proxy (Nginx)
+### 6. Reverse Proxy (Nginx)
 
 ```nginx
 server {
@@ -131,99 +198,6 @@ server {
 
 ---
 
-## Deploy to Vercel
-
-> **Important:** The Astro app lives in the `astro/` subdirectory, not at the repo root.
-> Vercel needs to know this — there are two ways to handle it.
-
-### 1. Swap Adapter
-
-In `astro/astro.config.mjs`, replace the adapter:
-
-```diff
-- import node from '@astrojs/node';
-+ import vercel from '@astrojs/vercel';
-
-  export default defineConfig({
-    output: 'server',
-    integrations: [react()],
--   adapter: node({ mode: 'standalone' }),
-+   adapter: vercel(),
-    vite: {
-      plugins: [tailwindcss()],
-    },
-  });
-```
-
-```bash
-cd astro && npm install @astrojs/vercel
-```
-
-### 2. Configure Root Directory (choose ONE method)
-
-#### Method A: `vercel.json` at repo root (recommended — already included)
-
-The repo includes a `vercel.json` that tells Vercel how to find the app:
-
-```json
-{
-  "buildCommand": "cd astro && npm install && npm run build",
-  "outputDirectory": "astro/dist",
-  "installCommand": "cd astro && npm install",
-  "framework": "astro"
-}
-```
-
-This file is already in the repo — no extra config needed on Vercel.
-
-#### Method B: Vercel Dashboard setting
-
-If you prefer not to use `vercel.json`:
-
-1. Go to **Vercel Dashboard → Project → Settings → General**
-2. Set **Root Directory** to `astro`
-3. Vercel will then treat `astro/` as the project root
-
-| Setting | Value |
-|:--------|:------|
-| **Root Directory** | `astro` |
-| **Framework** | Astro (auto-detected) |
-| **Build Command** | `npm run build` (runs inside Root Directory) |
-| **Output Directory** | `dist` (relative to Root Directory) |
-
-### 3. Set Environment Variables
-
-In **Vercel Dashboard → Project → Settings → Environment Variables**:
-
-```
-CMS_USER       = admin
-CMS_PASS_HASH  = $2a$12$...   ← paste as-is, Vercel doesn't corrupt $ chars
-CMS_SECRET     = your-random-secret
-GITHUB_TOKEN   = ghp_xxx
-CMS_REPO       = owner/repo
-CMS_SERVICE    = github
-```
-
-> **Note:** Vercel environment variables are NOT processed by dotenv-expand,
-> so bcrypt hashes with `$` characters work without escaping.
-
-### 4. Deploy
-
-```bash
-# Via Vercel CLI
-cd astro && vercel --prod
-
-# Or push to GitHub — Vercel auto-deploys from connected repo
-```
-
-### Vercel Limitations
-
-- **Rate limiting** resets on each cold start (serverless function lifecycle)
-- **Session storage** uses Vercel's default (check Astro session docs for Vercel adapter)
-- **File system access** is read-only — the `.env` file fallback won't work (not needed since Vercel provides env vars natively)
-
----
-
 ## Security Checklist
 
 Before going to production:
@@ -234,3 +208,7 @@ Before going to production:
 - [ ] Restrict `GITHUB_TOKEN` permissions (fine-grained: Contents read/write only)
 - [ ] Monitor access logs for brute force attempts
 - [ ] Keep dependencies updated (`npm audit`)
+
+---
+
+_Last updated: 2026-03-25_

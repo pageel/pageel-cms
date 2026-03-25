@@ -97,7 +97,7 @@ Hệ quản trị nội dung (CMS) nhẹ, tự host, sử dụng repository **Gi
 
 ```bash
 git clone https://github.com/pageel/pageel-cms.git
-cd pageel-cms/astro
+cd pageel-cms
 npm install
 ```
 

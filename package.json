@@ -13,7 +13,6 @@
   },
   "dependencies": {
     "@astrojs/check": "^0.9.8",
-    "@astrojs/node": "^10.0.3",
     "@astrojs/react": "^5.0.1",
     "@astrojs/vercel": "^10.0.2",
     "@tailwindcss/vite": "^4.2.2",
@@ -31,6 +30,7 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@astrojs/node": "^10.0.3",
     "@tailwindcss/typography": "^0.5.19",
     "@types/bcryptjs": "^2.4.6",
     "@types/dompurify": "^3.0.5",

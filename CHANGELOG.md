@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Project structure**: Flattened `astro/` subdirectory to repo root (zero-config deploy)
+- **Adapter**: Default adapter switched from `@astrojs/node` to `@astrojs/vercel`
+- **`@astrojs/node`** moved to devDependencies (for local dev only)
+
+### Removed
+
+- **`vercel.json`**: No longer needed (Vercel auto-detects Astro at root)
+
 ---
 
 ## [2.0.0-beta.0] - 2026-03-25
@@ -17,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Architecture migration**: Vite SPA → Astro 6 SSR application
 - **Auth model**: Client-side token paste → Server-side Env Auth (bcrypt)
-- **Directory structure**: `core/` removed, new app in `astro/`
+- **Directory structure**: App at repo root (flat structure)
 - **Removed**: Gitea/Gogs support (GitHub only for now)
 - **Removed**: Client-side crypto (AES-GCM token encryption)
 - **Removed**: `GitServiceConnect` token paste component
