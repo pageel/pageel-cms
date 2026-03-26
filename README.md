@@ -154,6 +154,16 @@ See [docs/deployment.md](docs/deployment.md) for VPS, Docker, and Vercel deploym
 
 ---
 
+## 📚 Documentation
+
+| Document | Description |
+| :------- | :---------- |
+| [Setup & Auth Modes](docs/setup.md) | Installation guide with detailed 3-mode configuration (Server, Connect, Open) |
+| [Deployment](docs/deployment.md) | VPS, Docker, Vercel deploy guides, env vars reference |
+| [Security Assessment](docs/security-assessment.md) | Auth, session, proxy security review |
+
+---
+
 ## 🌐 Ecosystem
 
 | Product            | Type       | Purpose                                       |

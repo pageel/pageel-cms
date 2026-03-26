@@ -154,6 +154,16 @@ Xem [docs/deployment.md](docs/deployment.md) để biết cách deploy lên VPS,
 
 ---
 
+## 📚 Tài liệu
+
+| Tài liệu | Mô tả |
+| :------- | :---------- |
+| [Cài đặt & Auth Modes](docs/setup.md) | Hướng dẫn cài đặt chi tiết với cấu hình 3 chế độ (Server, Connect, Open) |
+| [Triển khai](docs/deployment.md) | Hướng dẫn deploy VPS, Docker, Vercel, biến môi trường |
+| [Đánh giá bảo mật](docs/security-assessment.md) | Kiểm tra auth, session, proxy security |
+
+---
+
 ## 🌐 Hệ sinh thái
 
 | Sản phẩm           | Loại       | Mục đích                                               |
