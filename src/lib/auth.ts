@@ -46,13 +46,13 @@ export function checkRateLimit(ip: string): boolean {
 async function getPassHash(): Promise<string> {
   // Platform env (Vercel, Railway, Docker) — not corrupted by dotenv-expand
   const metaHash = import.meta.env.CMS_PASS_HASH;
-  if (metaHash && metaHash.startsWith('$2')) return metaHash;
+  if (metaHash && isValidBcryptHash(metaHash)) return metaHash;
 
   // Shell export
   const procHash = process.env.CMS_PASS_HASH;
-  if (procHash && procHash.startsWith('$2')) return procHash;
+  if (procHash && isValidBcryptHash(procHash)) return procHash;
 
-  // Local dev fallback — read raw .env file
+  // Local dev fallback — read raw .env file (bypasses dotenv-expand $ corruption)
   try {
     const fs = await import('node:fs');
     const path = await import('node:path');
@@ -64,6 +64,14 @@ async function getPassHash(): Promise<string> {
   } catch {
     return '';
   }
+}
+
+/**
+ * Validate bcrypt hash: must be 60 chars, start with $2a$ or $2b$ or $2y$
+ * Rejects truncated hashes from dotenv-expand corruption.
+ */
+function isValidBcryptHash(hash: string): boolean {
+  return hash.length === 60 && /^\$2[aby]\$/.test(hash);
 }
 
 /**
