@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.1] - 2026-03-27
+
+### Fixed
+
+- **BUG-20: First login SetupWizard folder picker broken**: When logging in for the first time (no `.pageelrc.json` exists), the SetupWizard's `RepoFileTree` component failed to load directory structure. Fixed by auto-creating a default `.pageelrc.json` configuration when the repository scan successfully detects content and image directories, bypassing the SetupWizard entirely. Users can adjust settings later via the Settings page.
+
+---
+
 ## [2.0.0] - 2026-03-26
 
 ### Added
@@ -239,6 +247,7 @@ First public release of Pageel CMS - a Git-based CMS for static & hybrid website
 
 ---
 
+[2.0.1]: https://github.com/pageel/pageel-cms/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/pageel/pageel-cms/compare/v2.0.0-beta.0...v2.0.0
 [2.0.0-beta.0]: https://github.com/pageel/pageel-cms/compare/v1.2.1...v2.0.0-beta.0
 [1.2.1]: https://github.com/pageel/pageel-cms/compare/v1.1.0...v1.2.1

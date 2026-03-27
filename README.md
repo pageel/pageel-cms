@@ -9,7 +9,7 @@
   <p>Manage your content where your code lives. No database required.</p>
 
   [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-  [![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](CHANGELOG.md)
+  [![Version](https://img.shields.io/badge/version-2.0.1-blue.svg)](CHANGELOG.md)
   ![Status](https://img.shields.io/badge/status-stable-brightgreen.svg)
   [![GitHub](https://img.shields.io/badge/GitHub-supported-181717?logo=github&logoColor=white)](https://github.com)
   [![Astro](https://img.shields.io/badge/Astro-6-BC52EE?logo=astro&logoColor=white)](https://astro.build)

@@ -22,6 +22,8 @@ import {
   useSettingsStore,
   useCollectionStore,
   loadCollectionsFromPageelrc,
+  withSyncLock,
+  Collection,
 } from '../features';
 
 interface UseDashboardInitParams {
@@ -253,6 +255,90 @@ export function useDashboardInit({ gitService, repo }: UseDashboardInitParams): 
         setSuggestedImagePaths(imageDirs);
         if (imageDirs.length > 0)
           setSettings((prev) => ({ ...prev, imagesPath: imageDirs[0] }));
+
+        // BUG-20: Auto-config — skip SetupWizard when scan found dirs
+        if (contentDirs.length > 0 && imageDirs.length > 0) {
+          try {
+            setScanPhase("Auto-creating configuration...", 95);
+
+            const autoPostsPath = contentDirs[0];
+            const autoImagesPath = imageDirs[0];
+            const detectedProjectType = foundUrl ? 'astro' : 'github';
+            const detectedDomainUrl = foundUrl || '';
+
+            const initialCollection = {
+              id: `collection-${Date.now()}`,
+              name: 'Main Collection',
+              postsPath: autoPostsPath,
+              imagesPath: autoImagesPath,
+            };
+
+            const workspaceConfig = {
+              version: 2,
+              settings: {
+                projectType: detectedProjectType,
+                domainUrl: detectedDomainUrl,
+                postFileTypes: DEFAULT_SETTINGS.postFileTypes,
+                imageFileTypes: DEFAULT_SETTINGS.imageFileTypes,
+                publishDateSource: DEFAULT_SETTINGS.publishDateSource,
+                imageCompressionEnabled: DEFAULT_SETTINGS.imageCompressionEnabled,
+                maxImageSize: DEFAULT_SETTINGS.maxImageSize,
+                imageResizeMaxWidth: DEFAULT_SETTINGS.imageResizeMaxWidth,
+              },
+              commitMessages: {
+                newPost: DEFAULT_SETTINGS.newPostCommit,
+                updatePost: DEFAULT_SETTINGS.updatePostCommit,
+                newImage: DEFAULT_SETTINGS.newImageCommit,
+                updateImage: DEFAULT_SETTINGS.updateImageCommit,
+              },
+              collections: [initialCollection],
+            };
+
+            await withSyncLock(
+              () => gitService.createFileFromString(
+                '.pageelrc.json',
+                JSON.stringify(workspaceConfig, null, 2),
+                'chore: auto-create pageel-cms config',
+              ),
+              'Auto-creating configuration...',
+            );
+
+            // Update stores
+            const store = useCollectionStore.getState();
+            if (!store.workspace) {
+              initWorkspace(repo.full_name);
+            }
+
+            const newCollection: Collection = {
+              ...initialCollection,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            };
+
+            store.setCollections([newCollection]);
+            store.setActiveCollection(newCollection.id);
+            store.updateSettings({
+              projectType: detectedProjectType,
+              domainUrl: detectedDomainUrl,
+              postFileTypes: DEFAULT_SETTINGS.postFileTypes,
+              imageFileTypes: DEFAULT_SETTINGS.imageFileTypes,
+              publishDateSource: DEFAULT_SETTINGS.publishDateSource,
+              imageCompressionEnabled: DEFAULT_SETTINGS.imageCompressionEnabled,
+              maxImageSize: DEFAULT_SETTINGS.maxImageSize,
+              imageResizeMaxWidth: DEFAULT_SETTINGS.imageResizeMaxWidth,
+              newPostCommit: DEFAULT_SETTINGS.newPostCommit,
+              updatePostCommit: DEFAULT_SETTINGS.updatePostCommit,
+              newImageCommit: DEFAULT_SETTINGS.newImageCommit,
+              updateImageCommit: DEFAULT_SETTINGS.updateImageCommit,
+            });
+
+            setScanPhase("Configuration created", 100);
+            setSetupComplete(true);
+            return;
+          } catch (autoConfigError) {
+            console.warn('Auto-config failed, falling back to SetupWizard', autoConfigError);
+          }
+        }
 
         setScanPhase("Scan complete", 100);
       } catch (error) {

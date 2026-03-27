@@ -1,6 +1,6 @@
 # Pageel CMS — Setup & Auth Modes Guide
 
-> **Version**: 2.0.0 | **Updated**: 2026-03-26
+> **Version**: 2.0.1 | **Updated**: 2026-03-27
 
 This document provides detailed instructions for installing Pageel CMS for the first time and an in-depth analysis of the 3 authentication modes, helping you choose the best model for your project.
 
