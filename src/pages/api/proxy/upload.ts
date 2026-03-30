@@ -42,6 +42,48 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       );
     }
 
+    // P1: Path validation — block dangerous upload paths
+    const BLOCKED_PATHS = [
+      /^\.\.\//,                                         // Path traversal
+      /^\.\//,                                           // Relative paths
+      /^\.env/,                                          // Config files
+      /^\.github\//,                                     // CI/CD
+      /^\.git\//,                                        // Git internals
+      /^src\//,                                          // Source code
+      /^node_modules\//,                                 // Dependencies
+      /\.(ts|tsx|js|jsx|mjs|cjs|sh|yml|yaml|toml)$/i,   // Code files
+    ];
+    const normalizedPath = path.replace(/^\/+/, '');
+    if (BLOCKED_PATHS.some(pattern => pattern.test(normalizedPath))) {
+      return new Response(
+        JSON.stringify({ error: `Upload path "${path}" is not allowed` }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // P2: File type validation
+    const ALLOWED_UPLOAD_TYPES = new Set([
+      'image/jpeg', 'image/png', 'image/webp',
+      'image/gif', 'image/svg+xml', 'image/avif',
+      'text/markdown', 'text/plain',
+      'application/octet-stream', // Some browsers send this for .md files
+    ]);
+    if (file.type && !ALLOWED_UPLOAD_TYPES.has(file.type)) {
+      return new Response(
+        JSON.stringify({ error: `File type "${file.type}" not allowed` }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // P2: File size validation (10MB max)
+    const MAX_UPLOAD_SIZE = 10 * 1024 * 1024;
+    if (file.size > MAX_UPLOAD_SIZE) {
+      return new Response(
+        JSON.stringify({ error: `File too large (max 10MB, got ${(file.size / 1024 / 1024).toFixed(1)}MB)` }),
+        { status: 413, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Read file as base64
     const arrayBuffer = await file.arrayBuffer();
     const bytes = new Uint8Array(arrayBuffer);

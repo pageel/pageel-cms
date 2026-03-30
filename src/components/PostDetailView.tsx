@@ -18,6 +18,8 @@ import { PlusIcon } from './icons/PlusIcon';
 import { EditIcon } from './icons/EditIcon';
 import { CloseIcon } from './icons/CloseIcon';
 import PostImageSelectionModal from './PostImageSelectionModal';
+import { SlotRenderer, createEditorGitService, usePluginConfig } from '../plugins';
+import type { EditorProps } from '@pageel/plugin-types';
 
 
 
@@ -201,8 +203,9 @@ const GalleryThumbnail: React.FC<{
 };
 
 const PostDetailView: React.FC<PostDetailViewProps> = ({ post, onBack, onDelete, gitService, repo, projectType, domainUrl, onUpdate, imagesPath, imageFileTypes, onAction }) => {
-  const [activeTab, setActiveTab] = useState<'preview' | 'code'>('preview');
+  const [activeTab, setActiveTab] = useState<'edit' | 'code' | 'preview'>('edit');
   const { t, language } = useI18n();
+  const pluginConfig = usePluginConfig();
 
   // --- Editable State ---
   const [editableFrontmatter, setEditableFrontmatter] = useState<Record<string, any>>(post.frontmatter);
@@ -881,17 +884,17 @@ const PostDetailView: React.FC<PostDetailViewProps> = ({ post, onBack, onDelete,
 
                 <div className="border-t border-notion-border mb-6"></div>
 
-                {/* Tabs */}
+                {/* Tabs — 3 tab system (Phase 3 PB-08) */}
                 <div className="flex items-center gap-6 mb-6">
                     <button
-                        onClick={() => setActiveTab('preview')}
+                        onClick={() => setActiveTab('edit')}
                         className={`pb-1 text-sm font-medium transition-all ${
-                            activeTab === 'preview'
+                            activeTab === 'edit'
                             ? 'text-notion-text border-b-2 border-notion-text'
                             : 'text-notion-muted hover:text-notion-text border-b-2 border-transparent'
                         }`}
                     >
-                        {t('postPreview.tabPreview')}
+                        ✏️ {pluginConfig.plugins?.editor ? 'Edit' : t('postPreview.tabMarkdown')}
                     </button>
                     <button
                         onClick={() => setActiveTab('code')}
@@ -901,13 +904,59 @@ const PostDetailView: React.FC<PostDetailViewProps> = ({ post, onBack, onDelete,
                             : 'text-notion-muted hover:text-notion-text border-b-2 border-transparent'
                         }`}
                     >
-                        {t('postPreview.tabMarkdown')} (Edit)
+                        &lt;/&gt; Markdown
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('preview')}
+                        className={`pb-1 text-sm font-medium transition-all ${
+                            activeTab === 'preview'
+                            ? 'text-notion-text border-b-2 border-notion-text'
+                            : 'text-notion-muted hover:text-notion-text border-b-2 border-transparent'
+                        }`}
+                    >
+                        👁 {t('postPreview.tabPreview')}
                     </button>
                 </div>
 
-                {/* Content Area */}
+                {/* Content Area — 3 tabs */}
                 <div className="pb-20">
-                {activeTab === 'preview' ? (
+                {activeTab === 'edit' ? (
+                    <SlotRenderer
+                        slot="editor"
+                        pluginName={pluginConfig.plugins?.editor}
+                        fallback={
+                            <div className="rounded-lg border border-notion-border overflow-hidden bg-white shadow-inner">
+                                <textarea 
+                                    className="w-full h-[60vh] p-6 text-xs font-mono text-notion-text overflow-x-auto whitespace-pre-wrap leading-relaxed focus:outline-none resize-none bg-notion-sidebar/30"
+                                    value={editableBody}
+                                    onChange={handleBodyChange}
+                                    spellCheck={false}
+                                />
+                            </div>
+                        }
+                        props={{
+                            value: editableBody,
+                            onChange: (markdown: string) => {
+                                setEditableBody(markdown);
+                                setIsDirty(true);
+                            },
+                            frontmatter: editableFrontmatter,
+                            gitService: createEditorGitService(gitService, imagesPath),
+                            imagesPath,
+                            locale: language,
+                            readOnly: false,
+                        } satisfies EditorProps as Record<string, unknown>}
+                    />
+                ) : activeTab === 'code' ? (
+                    <div className="rounded-lg border border-notion-border overflow-hidden bg-white shadow-inner">
+                        <textarea 
+                            className="w-full h-[60vh] p-6 text-xs font-mono text-notion-text overflow-x-auto whitespace-pre-wrap leading-relaxed focus:outline-none resize-none bg-notion-sidebar/30"
+                            value={editableBody}
+                            onChange={handleBodyChange}
+                            spellCheck={false}
+                        />
+                    </div>
+                ) : (
                     <div
                         className="prose prose-slate prose-sm sm:prose-base max-w-none text-notion-text
                         prose-headings:font-semibold prose-headings:text-gray-900
@@ -929,15 +978,6 @@ const PostDetailView: React.FC<PostDetailViewProps> = ({ post, onBack, onDelete,
                         prose-hr:my-8 prose-hr:border-gray-200"
                         dangerouslySetInnerHTML={createMarkup(editableBody)}
                     />
-                ) : (
-                    <div className="rounded-lg border border-notion-border overflow-hidden bg-white shadow-inner">
-                        <textarea 
-                            className="w-full h-[60vh] p-6 text-xs font-mono text-notion-text overflow-x-auto whitespace-pre-wrap leading-relaxed focus:outline-none resize-none bg-notion-sidebar/30"
-                            value={editableBody}
-                            onChange={handleBodyChange}
-                            spellCheck={false}
-                        />
-                    </div>
                 )}
                 </div>
               </div>

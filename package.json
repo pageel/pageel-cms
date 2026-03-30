@@ -1,18 +1,22 @@
 {
   "name": "pageel-cms",
   "type": "module",
-  "version": "2.0.1",
+  "version": "2.1.0-beta.1",
   "bin": {
     "pageel-cms": "./bin/cli.js"
   },
   "engines": {
     "node": ">=22.12.0"
   },
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "build:packages": "npm run build -w packages/plugin-types && npm run build -w packages/plugin-mdx && npm run build -w packages/cms-bridge"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.8",

@@ -1,0 +1,31 @@
+{
+  "name": "@pageel/cms",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./redirect": "./src/redirect.astro"
+  },
+  "files": [
+    "dist",
+    "src/redirect.astro"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "astro": "^5.0.0 || ^6.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT",
+  "description": "Astro integration for Pageel CMS",
+  "keywords": ["pageel", "cms", "astro", "integration"]
+}

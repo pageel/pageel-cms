@@ -1,0 +1,55 @@
+/**
+ * B2: CSS Isolation styles for MDXEditor
+ *
+ * Prevents Tailwind CSS 4.0 preflight/reset from affecting
+ * MDXEditor's internal styles (Lexical-based).
+ */
+
+.pageel-editor-slot {
+  /* Reset all inherited styles to browser defaults */
+  all: initial;
+  display: block;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  color: #1f2937;
+
+  /* Ensure editor fills container */
+  width: 100%;
+  min-height: 300px;
+
+  /* Restore box model */
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+}
+
+/* MDXEditor toolbar styling overrides */
+.pageel-editor-slot .mdxeditor {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.pageel-editor-slot .mdxeditor-toolbar {
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 4px 8px;
+}
+
+/* Content area */
+.pageel-editor-slot .mdxeditor-root-contenteditable {
+  padding: 16px 20px;
+  min-height: 280px;
+}
+
+/* Focus state */
+.pageel-editor-slot .mdxeditor:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+/* Spinner animation for loading */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

@@ -10,6 +10,11 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "jsxImportSource": "react",
-    "verbatimModuleSyntax": false
+    "verbatimModuleSyntax": false,
+    "paths": {
+      "@pageel/plugin-types": ["./packages/plugin-types/src/index.ts"],
+      "@pageel/plugin-mdx": ["./packages/plugin-mdx/src/index.ts"],
+      "@pageel/cms": ["./packages/cms-bridge/src/index.ts"]
+    }
   }
 }

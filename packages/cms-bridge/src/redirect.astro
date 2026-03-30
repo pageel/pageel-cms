@@ -1,0 +1,12 @@
+---
+/**
+ * Redirect page for /cms route
+ * Redirects to the Pageel CMS backend URL
+ */
+---
+<script is:inline>
+  const cmsUrl = import.meta.env.PUBLIC_PAGEEL_CMS_URL || 'https://cms.pageel.app';
+  window.location.href = cmsUrl;
+</script>
+<meta http-equiv="refresh" content="0;url=https://cms.pageel.app" />
+<p>Redirecting to CMS...</p>
