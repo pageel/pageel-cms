@@ -46,7 +46,7 @@ export interface PageelrcConfig {
 export async function loadCollectionsFromPageelrc(
   gitService: IGitService,
   repoId: string
-): Promise<{ collections: Collection[]; activeCollectionId: string | null; settings: Partial<WorkspaceSettings> } | null> {
+): Promise<{ collections: Collection[]; activeCollectionId: string | null; settings: Partial<WorkspaceSettings>; plugins?: { editor?: string; toolbar?: string; preview?: string } } | null> {
   try {
     const content = await gitService.getFileContent('.pageelrc.json');
     const config = JSON.parse(content);
@@ -84,6 +84,7 @@ export async function loadCollectionsFromPageelrc(
         collections,
         activeCollectionId: config.activeCollectionId || collections[0]?.id || null,
         settings,
+        plugins: config.plugins,
       };
     }
 
@@ -114,6 +115,7 @@ export async function loadCollectionsFromPageelrc(
           collections: [defaultCollection],
           activeCollectionId: 'default',
           settings,
+          plugins: config.plugins,
         };
       }
     }

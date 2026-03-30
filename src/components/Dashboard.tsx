@@ -49,6 +49,7 @@ import { SyncStatusBadge } from "./SyncStatusBadge";
 import { ExclamationTriangleIcon } from "./icons/ExclamationTriangleIcon";
 import { NewCollectionModal } from "./NewCollectionModal";
 import { EditCollectionModal } from "./EditCollectionModal";
+import { PluginConfigProvider } from "../plugins";
 
 // --- MAIN DASHBOARD ---
 interface DashboardProps {
@@ -93,6 +94,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     isSynced,
     handleAction,
     fetchStats,
+    pluginConfig,
   } = useDashboardInit({ gitService, repo });
 
   const {
@@ -332,6 +334,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     : "...";
 
   return (
+    <PluginConfigProvider config={pluginConfig}>
     <div className="flex h-screen bg-white font-sans overflow-hidden text-notion-text">
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
@@ -468,6 +471,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         />
       )}
     </div>
+    </PluginConfigProvider>
   );
 };
 

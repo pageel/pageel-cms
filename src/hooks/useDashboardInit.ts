@@ -15,6 +15,7 @@ import {
   IGitService,
   AppSettings,
 } from '../types';
+import type { PluginConfig } from '../plugins';
 import {
   SETTINGS_SCHEMA,
   DEFAULT_SETTINGS,
@@ -51,6 +52,9 @@ interface UseDashboardInitReturn {
   
   // Stats
   fetchStats: () => Promise<void>;
+  
+  // Plugin config (from .pageelrc.json)
+  pluginConfig: PluginConfig;
 }
 
 export function useDashboardInit({ gitService, repo }: UseDashboardInitParams): UseDashboardInitReturn {
@@ -101,6 +105,7 @@ export function useDashboardInit({ gitService, repo }: UseDashboardInitParams): 
   const [currentRepo, setCurrentRepo] = useState<GithubRepo>(repo);
   const [lastWriteTime, setLastWriteTime] = useState<number | null>(null);
   const [isSynced, setIsSynced] = useState(true);
+  const [pluginConfig, setPluginConfig] = useState<PluginConfig>({});
 
   const handleAction = useCallback(() => {
     setLastWriteTime(Date.now());
@@ -177,6 +182,9 @@ export function useDashboardInit({ gitService, repo }: UseDashboardInitParams): 
         if (collectionsData.settings) {
           updateWorkspaceSettings(collectionsData.settings);
         }
+        if (collectionsData.plugins) {
+          setPluginConfig({ plugins: collectionsData.plugins });
+        }
 
         setScanPhase("Configuration loaded", 100);
         setSetupComplete(true);
@@ -216,6 +224,12 @@ export function useDashboardInit({ gitService, repo }: UseDashboardInitParams): 
           }
 
           updateWorkspaceSettings(wsSettings);
+
+          // Read plugins config
+          if (config.plugins) {
+            setPluginConfig({ plugins: config.plugins });
+          }
+
           setScanPhase("Configuration loaded", 100);
           setSetupComplete(true);
           setScanning(false);
@@ -373,5 +387,6 @@ export function useDashboardInit({ gitService, repo }: UseDashboardInitParams): 
     isSynced,
     handleAction,
     fetchStats,
+    pluginConfig,
   };
 }
