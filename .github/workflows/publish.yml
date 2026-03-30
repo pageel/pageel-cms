@@ -96,19 +96,19 @@ jobs:
       # Publish in dependency order with provenance
       - name: Publish @pageel/plugin-types
         if: ${{ github.event.inputs.dry_run != 'true' }}
-        run: npm publish -w packages/plugin-types --provenance --access public
+        run: npm publish -w packages/plugin-types --provenance --access public --tag beta
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish @pageel/plugin-mdx
         if: ${{ github.event.inputs.dry_run != 'true' }}
-        run: npm publish -w packages/plugin-mdx --provenance --access public
+        run: npm publish -w packages/plugin-mdx --provenance --access public --tag beta
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish @pageel/cms
         if: ${{ github.event.inputs.dry_run != 'true' }}
-        run: npm publish -w packages/cms-bridge --provenance --access public
+        run: npm publish -w packages/cms-bridge --provenance --access public --tag beta
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 

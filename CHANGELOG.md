@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.1.0-beta.1] - 2026-03-30
+
+### Added
+
+- **Plugin System (Slot-based)**: Extensible editor architecture with `SlotRenderer`, `PluginRegistry`, and `ErrorBoundary` isolation. Plugins register via static import map and load lazily.
+- **@pageel/plugin-types** (`0.1.0`): TypeScript interfaces — `PageelPlugin`, `EditorProps`, `EditorGitService`. Zero runtime dependencies.
+- **@pageel/plugin-mdx** (`0.1.0`): WYSIWYG editor plugin wrapping MDXEditor with toolbar (headings, bold, italic, lists, links, images, code blocks), 300ms onChange debounce, and CSS isolation.
+- **@pageel/cms** (`0.1.0`): Astro integration bridge — auto-detect content collections, generate/sync `.pageelrc.json`, inject `/cms` redirect route.
+- **3-Tab Editing**: PostDetailView refactored to Edit (WYSIWYG/fallback) | Markdown (raw) | Preview (rendered HTML).
+- **EditorGitService**: Restricted adapter exposing only `uploadImage()` and `getImageBlob()` to plugins — IGitService's 13 methods remain CMS-internal.
+- **npm Workspace**: Monorepo setup with `packages/plugin-types`, `packages/plugin-mdx`, `packages/cms-bridge` under npm workspaces.
+- **CI/CD Publish Pipeline**: GitHub Actions workflow with dependency-ordered builds, npm provenance signatures, dry-run support, and security audit.
+
+### Security
+
+- **Upload path validation (P1)**: Server-side blocklist prevents path traversal, `.env`, `.github/`, `src/`, and code file uploads.
+- **File type/size validation (P2)**: Upload proxy restricts to image + markdown MIME types, 10MB max.
+- **Plugin name validation (S3)**: Regex whitelist accepts only `@pageel/plugin-*` pattern — blocks injection via `.pageelrc.json`.
+
+### Changed
+
+- **`.pageelrc.json` schema**: Added optional `plugins` field (`{ editor?: string, toolbar?: string, preview?: string }`). Backward compatible — old configs work without modification.
+- **Version**: 2.0.1 → 2.1.0 (MINOR — new plugin feature, no breaking changes)
+
+---
+
 ## [2.0.1] - 2026-03-27
 
 ### Fixed
@@ -247,6 +273,7 @@ First public release of Pageel CMS - a Git-based CMS for static & hybrid website
 
 ---
 
+[2.1.0-beta.1]: https://github.com/pageel/pageel-cms/compare/v2.0.1...v2.1.0-beta.1
 [2.0.1]: https://github.com/pageel/pageel-cms/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/pageel/pageel-cms/compare/v2.0.0-beta.0...v2.0.0
 [2.0.0-beta.0]: https://github.com/pageel/pageel-cms/compare/v1.2.1...v2.0.0-beta.0
