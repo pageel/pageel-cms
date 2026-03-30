@@ -129,5 +129,5 @@ export default function pageelCms(options: PageelCmsOptions = {}): AstroIntegrat
   };
 }
 
-// Re-export types
-export type { PageelCmsOptions };
+// Re-export for convenience
+export type { DetectedCollection };

@@ -9,8 +9,8 @@
   <p>Quản lý nội dung ngay nơi code của bạn. Không cần database.</p>
 
   [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-  [![Version](https://img.shields.io/badge/version-2.0.1-blue.svg)](CHANGELOG.md)
-  ![Status](https://img.shields.io/badge/status-stable-brightgreen.svg)
+  [![Version](https://img.shields.io/badge/version-2.1.0--beta.1-blue.svg)](CHANGELOG.md)
+  ![Status](https://img.shields.io/badge/status-beta-orange.svg)
   [![GitHub](https://img.shields.io/badge/GitHub-supported-181717?logo=github&logoColor=white)](https://github.com)
   [![Astro](https://img.shields.io/badge/Astro-6-BC52EE?logo=astro&logoColor=white)](https://astro.build)
   [![Node.js](https://img.shields.io/badge/Node.js-22+-339933?logo=node.js&logoColor=white)](https://nodejs.org)
@@ -42,6 +42,7 @@ Hệ quản trị nội dung (CMS) nhẹ, tự host, sử dụng repository **Gi
 | 📚 **Multi-Collection**   | Quản lý nhiều loại nội dung (Blog, Docs, Projects) trong một workspace                              |
 | 🏷️ **Typed Templates**    | Định nghĩa schema với các kiểu **String**, **Date**, **Boolean**, **Number**, **Array**, **Object** |
 | 🔍 **Smart Filtering**    | Tự động tạo bộ lọc thông minh dựa trên template                                                     |
+| 🧩 **Plugin System**      | Hệ thống plugin slot-based cho WYSIWYG editor (MDXEditor) với CSS isolation                          |
 | 🔐 **Server-Side Auth**   | Env Auth với bcrypt — Git token không bao giờ rời khỏi server                                       |
 | 🔀 **Multi-Tenant**       | Một bản deploy, nhiều repo — mỗi user tự cung cấp token khi đăng nhập                                |
 | 🌐 **Đa ngôn ngữ**        | Hỗ trợ Tiếng Anh và Tiếng Việt (i18n ready)                                                         |
@@ -83,7 +84,42 @@ Hệ quản trị nội dung (CMS) nhẹ, tự host, sử dụng repository **Gi
 - **HMAC-SHA256 sessions**: Signed cookies với HttpOnly + SameSite=Strict + Secure
 - **Xác thực Token khi login**: Token động được kiểm tra với GitHub API trước khi tạo phiên
 - **Rate limiting**: 5 lần/phút cho mỗi IP
-- **Proxy pattern**: Mọi API call đều qua server — client không bao giờ truy cập GitHub API trực tiếp
+- **Upload hardening**: Blocklist path validation + giới hạn loại file/kích thước trên upload proxy
+
+---
+
+## 🧩 Hệ thống Plugin (v2.1 — Beta)
+
+Pageel CMS có kiến trúc plugin dạng slot để mở rộng trải nghiệm soạn thảo.
+
+### Plugin có sẵn
+
+| Package | Mô tả | Trạng thái |
+| :--- | :--- | :--- |
+| `@pageel/plugin-types` | TypeScript interfaces để phát triển plugin | ✅ Sẵn sàng |
+| `@pageel/plugin-mdx` | WYSIWYG editor MDXEditor với toolbar, upload ảnh, debounce | ✅ Sẵn sàng |
+| `@pageel/cms` | Tích hợp Astro — tự phát hiện collections, inject route `/cms` | ✅ Sẵn sàng |
+
+### Bật WYSIWYG Editor
+
+Thêm vào file `.pageelrc.json`:
+
+```json
+{
+  "version": 2,
+  "plugins": {
+    "editor": "@pageel/plugin-mdx"
+  }
+}
+```
+
+### Hệ thống 3 Tab
+
+| Tab | Mô tả |
+| :--- | :--- |
+| ✏️ **Edit** | WYSIWYG editor (plugin MDXEditor) hoặc textarea mặc định |
+| `</>` **Markdown** | Soạn markdown thô — luôn có sẵn |
+| 👁 **Preview** | Xem trước HTML đã render |
 
 ---
 
@@ -161,15 +197,18 @@ Xem [docs/deployment.md](docs/deployment.md) để biết cách deploy lên VPS,
 | [Cài đặt & Auth Modes](docs/setup.md) | Hướng dẫn cài đặt chi tiết với cấu hình 3 chế độ (Server, Connect, Open) |
 | [Triển khai](docs/deployment.md) | Hướng dẫn deploy VPS, Docker, Vercel, biến môi trường |
 | [Đánh giá bảo mật](docs/security-assessment.md) | Kiểm tra auth, session, proxy security |
+| [Phát triển Plugin](packages/plugin-types/) | TypeScript interfaces để xây dựng plugin tùy chỉnh |
 
 ---
 
 ## 🌐 Hệ sinh thái
 
-| Sản phẩm           | Loại       | Mục đích                                               |
-| :----------------- | :--------- | :----------------------------------------------------- |
-| **Pageel CMS**     | OSS (MIT)  | CMS Git-native quản lý nội dung & media                |
-| **Pageel Workhub** | Thương mại | Workspace làm việc nhóm: quy trình, review, phân quyền |
+| Sản phẩm                 | Loại       | Mục đích                                                  |
+| :----------------------- | :--------- | :-------------------------------------------------------- |
+| **Pageel CMS**           | OSS (MIT)  | CMS Git-native quản lý nội dung & media                   |
+| **@pageel/plugin-mdx**   | OSS (MIT)  | Plugin WYSIWYG editor (MDXEditor)                          |
+| **@pageel/cms**          | OSS (MIT)  | Bridge tích hợp Astro                                      |
+| **Pageel Workhub**       | Thương mại | Workspace làm việc nhóm: quy trình, review, phân quyền    |
 
 > Pageel CMS tập trung vào **nội dung**. Để có tính năng làm việc nhóm, hãy xem Pageel Workhub.
 

@@ -9,8 +9,8 @@
   <p>Manage your content where your code lives. No database required.</p>
 
   [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-  [![Version](https://img.shields.io/badge/version-2.0.1-blue.svg)](CHANGELOG.md)
-  ![Status](https://img.shields.io/badge/status-stable-brightgreen.svg)
+  [![Version](https://img.shields.io/badge/version-2.1.0--beta.1-blue.svg)](CHANGELOG.md)
+  ![Status](https://img.shields.io/badge/status-beta-orange.svg)
   [![GitHub](https://img.shields.io/badge/GitHub-supported-181717?logo=github&logoColor=white)](https://github.com)
   [![Astro](https://img.shields.io/badge/Astro-6-BC52EE?logo=astro&logoColor=white)](https://astro.build)
   [![Node.js](https://img.shields.io/badge/Node.js-22+-339933?logo=node.js&logoColor=white)](https://nodejs.org)
@@ -42,6 +42,7 @@ A lightweight, self-hosted Content Management System that uses your **GitHub** r
 | 📚 **Multi-Collection**   | Manage multiple content types (Blog, Docs, Projects) in one workspace                   |
 | 🏷️ **Typed Templates**    | Define schema with **String**, **Date**, **Boolean**, **Number**, **Array**, **Object** |
 | 🔍 **Smart Filtering**    | Auto-generated filter UI based on your template types                                   |
+| 🧩 **Plugin System**      | Slot-based WYSIWYG editor plugins (MDXEditor included) with CSS isolation               |
 | 🔐 **Server-Side Auth**   | Env Auth with bcrypt — your Git token never leaves the server                           |
 | 🔀 **Multi-Tenant**       | One deployment, multiple repos — each user provides their own token at login             |
 | 🌐 **i18n Ready**         | English and Vietnamese support                                                          |
@@ -83,7 +84,42 @@ A lightweight, self-hosted Content Management System that uses your **GitHub** r
 - **HMAC-SHA256 sessions**: Signed cookies with HttpOnly + SameSite=Strict + Secure
 - **Token validation at login**: Dynamic tokens are verified against GitHub API before session is created
 - **Rate limiting**: 5 attempts per minute per IP
-- **Proxy pattern**: All Git API calls go through server — client never touches GitHub API directly
+- **Upload hardening**: Path validation blocklist + file type/size limits on upload proxy
+
+---
+
+## 🧩 Plugin System (v2.1 — Beta)
+
+Pageel CMS features a slot-based plugin architecture for extending the editor experience.
+
+### Available Plugins
+
+| Package | Description | Status |
+| :--- | :--- | :--- |
+| `@pageel/plugin-types` | TypeScript interfaces for plugin development | ✅ Ready |
+| `@pageel/plugin-mdx` | MDXEditor WYSIWYG editor with toolbar, image upload, debounce | ✅ Ready |
+| `@pageel/cms` | Astro integration — auto-detect collections, inject `/cms` route | ✅ Ready |
+
+### Enable WYSIWYG Editor
+
+Add to your `.pageelrc.json`:
+
+```json
+{
+  "version": 2,
+  "plugins": {
+    "editor": "@pageel/plugin-mdx"
+  }
+}
+```
+
+### 3-Tab Editing
+
+| Tab | Description |
+| :--- | :--- |
+| ✏️ **Edit** | WYSIWYG editor (MDXEditor plugin) or fallback textarea |
+| `</>` **Markdown** | Raw markdown editor — always available |
+| 👁 **Preview** | Rendered HTML preview |
 
 ---
 
@@ -161,15 +197,18 @@ See [docs/deployment.md](docs/deployment.md) for VPS, Docker, and Vercel deploym
 | [Setup & Auth Modes](docs/setup.md) | Installation guide with detailed 3-mode configuration (Server, Connect, Open) |
 | [Deployment](docs/deployment.md) | VPS, Docker, Vercel deploy guides, env vars reference |
 | [Security Assessment](docs/security-assessment.md) | Auth, session, proxy security review |
+| [Plugin Development](packages/plugin-types/) | TypeScript interfaces for building custom plugins |
 
 ---
 
 ## 🌐 Ecosystem
 
-| Product            | Type       | Purpose                                       |
-| :----------------- | :--------- | :-------------------------------------------- |
-| **Pageel CMS**     | OSS (MIT)  | Git-native CMS for content & media            |
-| **Pageel Workhub** | Commercial | Team workspace: workflow, review, permissions |
+| Product                | Type       | Purpose                                              |
+| :--------------------- | :--------- | :--------------------------------------------------- |
+| **Pageel CMS**         | OSS (MIT)  | Git-native CMS for content & media                   |
+| **@pageel/plugin-mdx** | OSS (MIT)  | WYSIWYG editor plugin (MDXEditor)                    |
+| **@pageel/cms**        | OSS (MIT)  | Astro integration bridge                             |
+| **Pageel Workhub**     | Commercial | Team workspace: workflow, review, permissions        |
 
 > Pageel CMS focuses on **content**. For team collaboration features, see Pageel Workhub.
 
