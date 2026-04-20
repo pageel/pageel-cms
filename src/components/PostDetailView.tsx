@@ -947,6 +947,7 @@ const PostDetailView: React.FC<PostDetailViewProps> = ({ post, onBack, onDelete,
                             imagesPath,
                             locale: language,
                             readOnly: false,
+                            imageBaseUrl: "/api/proxy/image/",
                         } satisfies EditorProps as Record<string, unknown>}
                     />
                 ) : activeTab === 'code' ? (

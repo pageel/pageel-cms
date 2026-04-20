@@ -8,6 +8,7 @@
 import type { APIRoute } from 'astro';
 import { uploadFile, getFileSha, createGitConfig } from '../../../lib/git-client';
 import { verifySession, resolveGitCredentials, COOKIE_NAME } from '../../../lib/session';
+import { isPathAllowed } from '../../../lib/proxy-utils';
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   try {
@@ -42,19 +43,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       );
     }
 
-    // P1: Path validation — block dangerous upload paths
-    const BLOCKED_PATHS = [
-      /^\.\.\//,                                         // Path traversal
-      /^\.\//,                                           // Relative paths
-      /^\.env/,                                          // Config files
-      /^\.github\//,                                     // CI/CD
-      /^\.git\//,                                        // Git internals
-      /^src\//,                                          // Source code
-      /^node_modules\//,                                 // Dependencies
-      /\.(ts|tsx|js|jsx|mjs|cjs|sh|yml|yaml|toml)$/i,   // Code files
-    ];
-    const normalizedPath = path.replace(/^\/+/, '');
-    if (BLOCKED_PATHS.some(pattern => pattern.test(normalizedPath))) {
+    if (!isPathAllowed(path)) {
       return new Response(
         JSON.stringify({ error: `Upload path "${path}" is not allowed` }),
         { status: 403, headers: { 'Content-Type': 'application/json' } }
