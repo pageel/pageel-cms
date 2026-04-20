@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { TrashIcon } from './icons/TrashIcon';
@@ -242,6 +242,9 @@ const PostDetailView: React.FC<PostDetailViewProps> = ({ post, onBack, onDelete,
   const [isEditorImageModalOpen, setIsEditorImageModalOpen] = useState(false);
   const [editorImageResolver, setEditorImageResolver] = useState<((url: string | null) => void) | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+
+  // Memoize the editor git service to prevent infinite editor re-renders
+  const editorGitService = useMemo(() => createEditorGitService(gitService, imagesPath), [gitService, imagesPath]);
 
   // Auto-resize title textarea
   useEffect(() => {
@@ -1030,7 +1033,7 @@ const PostDetailView: React.FC<PostDetailViewProps> = ({ post, onBack, onDelete,
                             initialValue: editableBody,
                             onChange: handleEditorChange,
                             frontmatter: editableFrontmatter,
-                            gitService: createEditorGitService(gitService, imagesPath),
+                            gitService: editorGitService,
                             imagesPath,
                             locale: language,
                             readOnly: false,
