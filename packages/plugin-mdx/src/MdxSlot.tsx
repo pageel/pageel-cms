@@ -95,6 +95,50 @@ export function MdxEditorSlot({
     }
   }, [externalMarkdownVersion, externalMarkdown, activeRef]);
 
+  // Keep latest onRequestImage in ref to avoid triggering useMemo
+  const requestImageRef = useRef(onRequestImage);
+  useEffect(() => {
+    requestImageRef.current = onRequestImage;
+  }, [onRequestImage]);
+
+  // B3: Memoize plugins to prevent infinite re-mounts of MDXEditor
+  const memoizedPlugins = useMemo(() => [
+    headingsPlugin(),
+    listsPlugin(),
+    quotePlugin(),
+    thematicBreakPlugin(),
+    linkPlugin(),
+    imagePluginConfig,
+    codeBlockPlugin({ defaultCodeBlockLanguage: '' }),
+    markdownShortcutPlugin(),
+    toolbarPlugin({
+      toolbarContents: () => (
+        <>
+          <BlockTypeSelect />
+          <BoldItalicUnderlineToggles />
+          <ListsToggle />
+          <CreateLink />
+          <InsertImage />
+          {requestImageRef.current && (
+            <button
+              type="button"
+              title="Choose from Library"
+              onClick={async () => {
+                const path = await requestImageRef.current?.();
+                if (path) {
+                  activeRef.current?.insertMarkdown(`![](${path})`);
+                }
+              }}
+              className="flex items-center justify-center p-1.5 hover:bg-gray-100 rounded text-gray-700 text-sm ml-1"
+            >
+              🖼 Library
+            </button>
+          )}
+        </>
+      ),
+    }),
+  ], [imagePluginConfig, activeRef]);
+
   return (
     // B2: CSS isolation — prevent Tailwind preflight from affecting editor
     <div className="pageel-editor-slot">
@@ -103,42 +147,7 @@ export function MdxEditorSlot({
         markdown={initialValue}
         onChange={debouncedOnChange}
         readOnly={readOnly}
-        plugins={[
-          headingsPlugin(),
-          listsPlugin(),
-          quotePlugin(),
-          thematicBreakPlugin(),
-          linkPlugin(),
-          imagePluginConfig,
-          codeBlockPlugin({ defaultCodeBlockLanguage: '' }),
-          markdownShortcutPlugin(),
-          toolbarPlugin({
-            toolbarContents: () => (
-              <>
-                <BlockTypeSelect />
-                <BoldItalicUnderlineToggles />
-                <ListsToggle />
-                <CreateLink />
-                <InsertImage />
-                {onRequestImage && (
-                  <button
-                    type="button"
-                    title="Choose from Library"
-                    onClick={async () => {
-                      const path = await onRequestImage();
-                      if (path) {
-                        activeRef.current?.insertMarkdown(`![](${path})`);
-                      }
-                    }}
-                    className="flex items-center justify-center p-1.5 hover:bg-gray-100 rounded text-gray-700 text-sm ml-1"
-                  >
-                    🖼 Library
-                  </button>
-                )}
-              </>
-            ),
-          }),
-        ]}
+        plugins={memoizedPlugins}
       />
     </div>
   );
