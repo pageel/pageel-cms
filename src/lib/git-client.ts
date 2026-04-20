@@ -118,7 +118,9 @@ export async function getFileContent(config: GitClientConfig, path: string) {
 
 export async function getFileSha(config: GitClientConfig, path: string): Promise<string | null> {
   try {
-    const data = await apiCall(config, `${repoPath(config)}/contents/${path}`);
+    const cacheBuster = `_t=${Date.now()}`;
+    const querySymbol = path.includes('?') ? '&' : '?';
+    const data = await apiCall(config, `${repoPath(config)}/contents/${path}${querySymbol}${cacheBuster}`);
     return data.sha || null;
   } catch {
     return null;
