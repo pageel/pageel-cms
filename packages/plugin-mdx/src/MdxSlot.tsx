@@ -59,9 +59,11 @@ export function MdxEditorSlot({
   imageBaseUrl,
   externalMarkdown,
   externalMarkdownVersion,
+  editorRef,
   readOnly = false,
 }: EditorProps) {
-  const editorRef = useRef<MDXEditorMethods>(null);
+  const internalRef = useRef<MDXEditorMethods>(null);
+  const activeRef = editorRef || internalRef;
 
   // B1: Debounce onChange to 300ms
   const debouncedOnChange = useDebouncedCallback(onChange, 300);
@@ -88,15 +90,15 @@ export function MdxEditorSlot({
   // L1 fix: sync external markdown when Source tab edits happen
   useEffect(() => {
     if (externalMarkdownVersion && externalMarkdown !== undefined) {
-      editorRef.current?.setMarkdown(externalMarkdown);
+      activeRef.current?.setMarkdown(externalMarkdown);
     }
-  }, [externalMarkdownVersion, externalMarkdown]);
+  }, [externalMarkdownVersion, externalMarkdown, activeRef]);
 
   return (
     // B2: CSS isolation — prevent Tailwind preflight from affecting editor
     <div className="pageel-editor-slot">
       <MDXEditor
-        ref={editorRef}
+        ref={activeRef}
         markdown={initialValue}
         onChange={debouncedOnChange}
         readOnly={readOnly}

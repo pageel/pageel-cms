@@ -206,6 +206,27 @@ const PostDetailView: React.FC<PostDetailViewProps> = ({ post, onBack, onDelete,
   const [activeTab, setActiveTab] = useState<'edit' | 'code' | 'preview'>('edit');
   const { t, language } = useI18n();
   const pluginConfig = usePluginConfig();
+  const hasWysiwygPlugin = !!pluginConfig.plugins?.editor;
+
+  useEffect(() => {
+      if (!hasWysiwygPlugin && activeTab === 'edit') {
+          setActiveTab('code');
+      }
+  }, [hasWysiwygPlugin, activeTab]);
+
+  const [externalMarkdownVersion, setExternalMarkdownVersion] = useState(0);
+  const editorRef = useRef<any>(null);
+
+  const handleTabChange = (newTab: 'edit' | 'code' | 'preview') => {
+      if (activeTab === 'edit' && newTab !== 'edit') {
+          const latestMd = editorRef.current?.getMarkdown();
+          if (latestMd !== undefined) setEditableBody(latestMd);
+      }
+      if (activeTab !== 'edit' && newTab === 'edit') {
+          setExternalMarkdownVersion(v => v + 1);
+      }
+      setActiveTab(newTab);
+  };
 
   // --- Editable State ---
   const [editableFrontmatter, setEditableFrontmatter] = useState<Record<string, any>>(post.frontmatter);
@@ -891,28 +912,30 @@ const PostDetailView: React.FC<PostDetailViewProps> = ({ post, onBack, onDelete,
 
                 {/* Tabs — 3 tab system (Phase 3 PB-08) */}
                 <div className="flex items-center gap-6 mb-6">
+                    {hasWysiwygPlugin && (
+                        <button
+                            onClick={() => handleTabChange('edit')}
+                            className={`pb-1 text-sm font-medium transition-all ${
+                                activeTab === 'edit'
+                                ? 'text-notion-text border-b-2 border-notion-text'
+                                : 'text-notion-muted hover:text-notion-text border-b-2 border-transparent'
+                            }`}
+                        >
+                            ✏️ Edit
+                        </button>
+                    )}
                     <button
-                        onClick={() => setActiveTab('edit')}
-                        className={`pb-1 text-sm font-medium transition-all ${
-                            activeTab === 'edit'
-                            ? 'text-notion-text border-b-2 border-notion-text'
-                            : 'text-notion-muted hover:text-notion-text border-b-2 border-transparent'
-                        }`}
-                    >
-                        ✏️ {pluginConfig.plugins?.editor ? 'Edit' : t('postPreview.tabMarkdown')}
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('code')}
+                        onClick={() => handleTabChange('code')}
                         className={`pb-1 text-sm font-medium transition-all ${
                             activeTab === 'code'
                             ? 'text-notion-text border-b-2 border-notion-text'
                             : 'text-notion-muted hover:text-notion-text border-b-2 border-transparent'
                         }`}
                     >
-                        &lt;/&gt; Markdown
+                        {hasWysiwygPlugin ? '</> Source' : '✏️ Markdown'}
                     </button>
                     <button
-                        onClick={() => setActiveTab('preview')}
+                        onClick={() => handleTabChange('preview')}
                         className={`pb-1 text-sm font-medium transition-all ${
                             activeTab === 'preview'
                             ? 'text-notion-text border-b-2 border-notion-text'
@@ -948,6 +971,9 @@ const PostDetailView: React.FC<PostDetailViewProps> = ({ post, onBack, onDelete,
                             locale: language,
                             readOnly: false,
                             imageBaseUrl: "/api/proxy/image/",
+                            editorRef,
+                            externalMarkdown: editableBody,
+                            externalMarkdownVersion,
                         } satisfies EditorProps as Record<string, unknown>}
                     />
                 ) : activeTab === 'code' ? (

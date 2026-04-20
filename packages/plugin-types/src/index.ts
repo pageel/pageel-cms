@@ -51,6 +51,8 @@ export interface EditorProps {
   externalMarkdown?: string;
   /** Change counter — plugin watches this to detect when externalMarkdown needs syncing */
   externalMarkdownVersion?: number;
+  /** Ref để truy xuất các phương thức của Editor như getMarkdown() */
+  editorRef?: React.MutableRefObject<any>;
 }
 
 export interface ToolbarProps {
