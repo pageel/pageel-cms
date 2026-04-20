@@ -35,8 +35,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       if (sha) {
         const fileData = await getFileContent(config, PAGEELRC_PATH);
         if (fileData) {
-          const text = atob(fileData.replace(/\n/g, ''));
-          currentConfig = JSON.parse(text);
+          currentConfig = JSON.parse(fileData);
         }
       }
     } catch (err) {
