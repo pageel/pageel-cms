@@ -61,6 +61,7 @@ export function MdxEditorSlot({
   externalMarkdownVersion,
   editorRef,
   readOnly = false,
+  onRequestImage,
 }: EditorProps) {
   const internalRef = useRef<MDXEditorMethods>(null);
   const activeRef = editorRef || internalRef;
@@ -119,6 +120,21 @@ export function MdxEditorSlot({
                 <ListsToggle />
                 <CreateLink />
                 <InsertImage />
+                {onRequestImage && (
+                  <button
+                    type="button"
+                    title="Choose from Library"
+                    onClick={async () => {
+                      const path = await onRequestImage();
+                      if (path) {
+                        activeRef.current?.insertMarkdown(`![](${path})`);
+                      }
+                    }}
+                    className="flex items-center justify-center p-1.5 hover:bg-gray-100 rounded text-gray-700 text-sm ml-1"
+                  >
+                    🖼 Library
+                  </button>
+                )}
               </>
             ),
           }),

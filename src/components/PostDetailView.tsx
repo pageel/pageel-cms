@@ -239,6 +239,8 @@ const PostDetailView: React.FC<PostDetailViewProps> = ({ post, onBack, onDelete,
   const updatePostFileInputRef = useRef<HTMLInputElement>(null);
   const titleTextareaRef = useRef<HTMLTextAreaElement>(null);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [isEditorImageModalOpen, setIsEditorImageModalOpen] = useState(false);
+  const [editorImageResolver, setEditorImageResolver] = useState<((url: string | null) => void) | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
   // Auto-resize title textarea
@@ -406,6 +408,58 @@ const PostDetailView: React.FC<PostDetailViewProps> = ({ post, onBack, onDelete,
       } finally {
           setIsUploading(false);
           setIsImageModalOpen(false);
+      }
+  };
+
+  const handleRequestImage = (): Promise<string | null> => {
+      setIsEditorImageModalOpen(true);
+      return new Promise((resolve) => {
+          setEditorImageResolver(() => resolve);
+      });
+  };
+
+  const handleEditorImageConfirm = async (result: { type: 'new' | 'existing', file?: File, path?: string }) => {
+      setIsEditorImageModalOpen(false);
+      if (!editorImageResolver) return;
+
+      setIsUploading(true);
+      try {
+          let imageUrl = '';
+          if (result.type === 'new' && result.file) {
+              const commitMsg = `feat(assets): add image "${result.file.name}"`;
+              const fullPath = imagesPath ? `${imagesPath}/${result.file.name}` : result.file.name;
+              await gitService.uploadFile(fullPath, result.file, commitMsg);
+              imageUrl = fullPath;
+              onAction(); // Trigger sync
+          } else if (result.type === 'existing' && result.path) {
+              imageUrl = result.path;
+          }
+
+          if (imageUrl) {
+              let finalUrl = imageUrl;
+              if (finalUrl.startsWith('public/')) {
+                  finalUrl = finalUrl.replace('public/', '/');
+              } else if (!finalUrl.startsWith('http') && !finalUrl.startsWith('/')) {
+                  finalUrl = '/' + finalUrl;
+              }
+              editorImageResolver(finalUrl);
+          } else {
+              editorImageResolver(null);
+          }
+      } catch (e) {
+          console.error('Error picking image for editor', e);
+          editorImageResolver(null);
+      } finally {
+          setIsUploading(false);
+          setEditorImageResolver(null);
+      }
+  };
+
+  const handleEditorImageClose = () => {
+      setIsEditorImageModalOpen(false);
+      if (editorImageResolver) {
+          editorImageResolver(null);
+          setEditorImageResolver(null);
       }
   };
 
@@ -673,6 +727,16 @@ const PostDetailView: React.FC<PostDetailViewProps> = ({ post, onBack, onDelete,
             imageFileTypes={imageFileTypes}
             onClose={() => setIsImageModalOpen(false)}
             onConfirm={handleImageConfirm}
+          />
+      )}
+
+      {isEditorImageModalOpen && (
+          <PostImageSelectionModal
+            gitService={gitService}
+            imagesPath={imagesPath}
+            imageFileTypes={imageFileTypes}
+            onClose={handleEditorImageClose}
+            onConfirm={handleEditorImageConfirm}
           />
       )}
 
@@ -974,6 +1038,7 @@ const PostDetailView: React.FC<PostDetailViewProps> = ({ post, onBack, onDelete,
                             editorRef,
                             externalMarkdown: editableBody,
                             externalMarkdownVersion,
+                            onRequestImage: handleRequestImage,
                         } satisfies EditorProps as Record<string, unknown>}
                     />
                 ) : activeTab === 'code' ? (
