@@ -28,6 +28,8 @@ export function isValidPluginName(name: string): boolean {
 }
 
 // ── Resolve slot component ──
+const lazyCache: Record<string, ComponentType<any>> = {};
+
 export function resolveSlotComponent<T>(
   pluginName: string | undefined,
   slot: keyof PageelPlugin['slots']
@@ -39,13 +41,18 @@ export function resolveSlotComponent<T>(
     return null;
   }
 
+  const cacheKey = `${pluginName}:${slot}`;
+  if (lazyCache[cacheKey]) {
+    return lazyCache[cacheKey] as ComponentType<T>;
+  }
+
   const loader = PLUGIN_LOADERS[pluginName];
   if (!loader) {
     console.warn(`[pageel] Plugin "${pluginName}" not in registry. Install it first.`);
     return null;
   }
 
-  return lazy(async () => {
+  const Component = lazy(async () => {
     const mod = await loader();
     const component = mod.default.slots[slot];
     if (!component) {
@@ -53,6 +60,9 @@ export function resolveSlotComponent<T>(
     }
     return { default: component as ComponentType<any> };
   });
+
+  lazyCache[cacheKey] = Component;
+  return Component as ComponentType<T>;
 }
 
 // ── Get plugin metadata (non-lazy) ──

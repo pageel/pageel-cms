@@ -17,6 +17,8 @@ import { resolveImageSource } from '../utils/github';
 import { PlusIcon } from './icons/PlusIcon';
 import { EditIcon } from './icons/EditIcon';
 import { CloseIcon } from './icons/CloseIcon';
+import { CodeIcon } from './icons/CodeIcon';
+import { EyeIcon } from './icons/EyeIcon';
 import PostImageSelectionModal from './PostImageSelectionModal';
 import { SlotRenderer, createEditorGitService, usePluginConfig } from '../plugins';
 import type { EditorProps } from '@pageel/plugin-types';
@@ -288,7 +290,8 @@ const PostDetailView: React.FC<PostDetailViewProps> = ({ post, onBack, onDelete,
   };
 
   const handleEditorChange = useCallback((markdown: string) => {
-      setEditableBody(markdown);
+      // Uncontrolled pattern: không cập nhật state `editableBody` trên mỗi keystroke
+      // Tránh việc re-render toàn bộ giao diện PostDetailView
       setIsDirty(true);
   }, []);
 
@@ -305,7 +308,17 @@ const PostDetailView: React.FC<PostDetailViewProps> = ({ post, onBack, onDelete,
       if (!isDirty) return;
       setIsSaving(true);
       try {
-          const finalContent = updateFrontmatter(editableBody, editableFrontmatter);
+          let currentBody = editableBody;
+          // Lấy nội dung mới nhất từ editor nếu đang ở tab edit
+          if (activeTab === 'edit' && editorRef.current) {
+              const latestMd = editorRef.current.getMarkdown();
+              if (latestMd !== undefined) {
+                  currentBody = latestMd;
+                  setEditableBody(latestMd); // Đồng bộ lại state phòng trường hợp user chuyển tab sau đó
+              }
+          }
+          
+          const finalContent = updateFrontmatter(currentBody, editableFrontmatter);
           const commitMessage = `fix(content): update post "${post.name}" from editor`;
           
           await gitService.updateFileContent(post.path, finalContent, commitMessage, post.sha);
@@ -982,34 +995,34 @@ const PostDetailView: React.FC<PostDetailViewProps> = ({ post, onBack, onDelete,
                     {hasWysiwygPlugin && (
                         <button
                             onClick={() => handleTabChange('edit')}
-                            className={`pb-1 text-sm font-medium transition-all ${
-                                activeTab === 'edit'
-                                ? 'text-notion-text border-b-2 border-notion-text'
-                                : 'text-notion-muted hover:text-notion-text border-b-2 border-transparent'
-                            }`}
-                        >
-                            ✏️ Edit
-                        </button>
+                        className={`flex items-center gap-1.5 pb-1 text-sm font-medium transition-all ${
+                            activeTab === 'edit'
+                            ? 'text-notion-text border-b-2 border-notion-text'
+                            : 'text-notion-muted hover:text-notion-text border-b-2 border-transparent'
+                        }`}
+                    >
+                        <EditIcon className="w-4 h-4" /> Edit
+                    </button>
                     )}
                     <button
                         onClick={() => handleTabChange('code')}
-                        className={`pb-1 text-sm font-medium transition-all ${
+                        className={`flex items-center gap-1.5 pb-1 text-sm font-medium transition-all ${
                             activeTab === 'code'
                             ? 'text-notion-text border-b-2 border-notion-text'
                             : 'text-notion-muted hover:text-notion-text border-b-2 border-transparent'
                         }`}
                     >
-                        {hasWysiwygPlugin ? '</> Source' : '✏️ Markdown'}
+                        {hasWysiwygPlugin ? (<span className="flex items-center gap-1.5"><CodeIcon className="w-4 h-4" /> Source</span>) : (<span className="flex items-center gap-1.5"><DocumentIcon className="w-4 h-4" /> Markdown</span>)}
                     </button>
                     <button
                         onClick={() => handleTabChange('preview')}
-                        className={`pb-1 text-sm font-medium transition-all ${
+                        className={`flex items-center gap-1.5 pb-1 text-sm font-medium transition-all ${
                             activeTab === 'preview'
                             ? 'text-notion-text border-b-2 border-notion-text'
                             : 'text-notion-muted hover:text-notion-text border-b-2 border-transparent'
                         }`}
                     >
-                        👁 {t('postPreview.tabPreview')}
+                        <EyeIcon className="w-4 h-4" /> {t('postPreview.tabPreview')}
                     </button>
                 </div>
 

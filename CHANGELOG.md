@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.1.0] - 2026-04-22
+
+### Added
+
+- **Image Proxy Endpoint**: Created secure `/api/proxy/image/[...path]` endpoint specifically for editor image preview.
+- **Smart Tabs System**: Bidirectional sync between WYSIWYG (Edit) and Markdown (Source) tabs, eliminating duplicate views.
+- **Settings UI**: Added interface to configure editor plugins directly via UI, updating `.pageelrc.json` with optimistic UI updates.
+- **Image Gallery Integration**: Integrated existing Image Picker into MDXEditor toolbar, using uncontrolled callback pattern (`onRequestImage`).
+
+### Changed
+
+- **Uncontrolled Editor Pattern**: Changed EditorProps `value` to `initialValue` to prevent re-render loops and improve typing performance (BUG-21 fix).
+- **Core Version vs Plugin Version**: Decoupled core and plugin versioning (Core v2.1.0, Plugins v0.2.0).
+
+---
+
 ## [2.1.0-beta.1] - 2026-03-30
 
 ### Added
@@ -273,6 +289,7 @@ First public release of Pageel CMS - a Git-based CMS for static & hybrid website
 
 ---
 
+[2.1.0]: https://github.com/pageel/pageel-cms/compare/v2.1.0-beta.1...v2.1.0
 [2.1.0-beta.1]: https://github.com/pageel/pageel-cms/compare/v2.0.1...v2.1.0-beta.1
 [2.0.1]: https://github.com/pageel/pageel-cms/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/pageel/pageel-cms/compare/v2.0.0-beta.0...v2.0.0

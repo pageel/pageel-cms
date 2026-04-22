@@ -1,6 +1,6 @@
 {
   "name": "@pageel/plugin-mdx",
-  "version": "0.2.0-beta.2",
+  "version": "0.2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/pageel/pageel-cms",

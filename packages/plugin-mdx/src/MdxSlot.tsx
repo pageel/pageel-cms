@@ -21,15 +21,16 @@ import {
   toolbarPlugin,
   BoldItalicUnderlineToggles,
   BlockTypeSelect,
-  InsertImage,
   ListsToggle,
   CreateLink,
+  insertImage$,
+  usePublisher,
   type ImageUploadHandler,
   type MDXEditorMethods
 } from '@mdxeditor/editor';
 import '@mdxeditor/editor/style.css';
 import type { EditorProps } from '@pageel/plugin-types';
-import { useMemo, useCallback, useRef, useEffect } from 'react';
+import { useMemo, useCallback, useRef, useEffect, useState } from 'react';
 
 // ── B1: Debounce utility ──
 function useDebouncedCallback<T extends (...args: any[]) => void>(
@@ -51,6 +52,39 @@ function useDebouncedCallback<T extends (...args: any[]) => void>(
   }, [delay]);
 }
 
+// ── Custom Image Button ──
+const CustomImageButton = ({ 
+  requestImageRef,
+  activeRef
+}: { 
+  requestImageRef: React.MutableRefObject<(() => Promise<string | null>) | undefined>,
+  activeRef: React.MutableRefObject<MDXEditorMethods | null>
+}) => {
+  const insertImage = usePublisher(insertImage$);
+
+  return (
+    <button
+      type="button"
+      title="Insert Image (Upload or from Repo)"
+      onClick={async () => {
+        const path = await requestImageRef.current?.();
+        if (path) {
+          // Khôi phục focus để editor biết vị trí chèn
+          activeRef.current?.focus();
+          
+          // Đợi DOM cập nhật focus rồi mới insert
+          setTimeout(() => {
+            insertImage({ src: path });
+          }, 50);
+        }
+      }}
+      className="flex items-center justify-center p-1.5 hover:bg-gray-100 rounded text-gray-700 text-sm ml-1 transition-colors"
+    >
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-gray-600"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+    </button>
+  );
+};
+
 // ── Editor Component ──
 export function MdxEditorSlot({
   initialValue,
@@ -65,6 +99,7 @@ export function MdxEditorSlot({
 }: EditorProps) {
   const internalRef = useRef<MDXEditorMethods>(null);
   const activeRef = editorRef || internalRef;
+  const [initialMarkdown] = useState(initialValue);
 
   // B1: Debounce onChange to 300ms
   const debouncedOnChange = useDebouncedCallback(onChange, 300);
@@ -118,26 +153,7 @@ export function MdxEditorSlot({
           <BoldItalicUnderlineToggles />
           <ListsToggle />
           <CreateLink />
-          <InsertImage />
-          {requestImageRef.current && (
-            <button
-              type="button"
-              title="Choose from Library"
-              onClick={async () => {
-                const path = await requestImageRef.current?.();
-                if (path) {
-                  // Must restore focus first, otherwise insertMarkdown will silently fail
-                  activeRef.current?.focus();
-                  setTimeout(() => {
-                    activeRef.current?.insertMarkdown(`![](${path})`);
-                  }, 50);
-                }
-              }}
-              className="flex items-center justify-center p-1.5 hover:bg-gray-100 rounded text-gray-700 text-sm ml-1"
-            >
-              🖼 Library
-            </button>
-          )}
+          <CustomImageButton requestImageRef={requestImageRef} activeRef={activeRef} />
         </>
       ),
     }),
@@ -148,7 +164,7 @@ export function MdxEditorSlot({
     <div className="pageel-editor-slot">
       <MDXEditor
         ref={activeRef}
-        markdown={initialValue}
+        markdown={initialMarkdown}
         onChange={debouncedOnChange}
         readOnly={readOnly}
         plugins={memoizedPlugins}
