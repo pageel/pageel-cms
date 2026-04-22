@@ -92,6 +92,7 @@ export const translations = {
       },
       userMenu: {
         viewProfile: 'View Profile',
+        viewRepository: 'View Repository',
         serviceTooltip: 'Connected via {{service}}',
       },
       setup: {
@@ -647,6 +648,7 @@ export const translations = {
       },
       userMenu: {
         viewProfile: 'Xem Hồ sơ',
+        viewRepository: 'Xem Repo',
         serviceTooltip: 'Đã kết nối qua {{service}}',
       },
       setup: {

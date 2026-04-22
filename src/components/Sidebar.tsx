@@ -22,6 +22,8 @@ interface SidebarProps {
     serviceType: ServiceType;
     onLogout: () => void;
     isSynced: boolean;
+    repoName: string;
+    repoUrl: string;
     repoStats: { postCount: number | null, imageCount: number | null };
     lastUpdated: string;
     onNewCollection?: () => void;
@@ -37,6 +39,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     serviceType, 
     onLogout, 
     isSynced, 
+    repoName,
+    repoUrl,
     repoStats, 
     lastUpdated, 
     onNewCollection,
@@ -80,7 +84,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         <img src={user.avatar_url} alt={user.login} className="w-full h-full" />
                     </div>
                     <div className="flex-grow min-w-0">
-                        <p className="text-sm font-medium truncate leading-none text-notion-text">{user.login}'s Repo</p>
+                        <p className="text-sm font-medium truncate leading-none text-notion-text">{repoName}</p>
                     </div>
                     <div className="text-notion-muted opacity-0 group-hover:opacity-100 transition-opacity">
                         <ChevronDownIcon className="w-3 h-3" />
@@ -92,8 +96,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         <div className="px-3 py-2 border-b border-notion-border mb-1">
                             <p className="text-xs text-notion-muted truncate">{user.name || user.login} ({serviceType})</p>
                         </div>
-                        <a href={user.html_url} target="_blank" rel="noopener noreferrer" className="flex items-center px-3 py-1.5 text-sm text-notion-text hover:bg-notion-hover mx-1 rounded-sm">
-                            <span className="flex-grow">{t('dashboard.userMenu.viewProfile')}</span>
+                        <a href={repoUrl} target="_blank" rel="noopener noreferrer" className="flex items-center px-3 py-1.5 text-sm text-notion-text hover:bg-notion-hover mx-1 rounded-sm">
+                            <span className="flex-grow">{t('dashboard.userMenu.viewRepository')}</span>
                         </a>
                         <div className="border-t border-notion-border my-1"></div>
                         <button onClick={onLogout} className="w-full text-left flex items-center px-3 py-1.5 text-sm text-notion-text hover:bg-notion-hover mx-1 rounded-sm">

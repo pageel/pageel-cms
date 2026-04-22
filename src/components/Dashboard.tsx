@@ -357,8 +357,9 @@ const Dashboard: React.FC<DashboardProps> = ({
           navLinks={navLinks}
           user={user}
           serviceType={serviceType}
+          repoName={currentRepo.name}
+          repoUrl={currentRepo.html_url}
           onLogout={onLogout}
-          onResetAndLogout={() => {}}
           isSynced={isSynced}
           repoStats={repoStats}
           lastUpdated={lastUpdated}
@@ -414,6 +415,8 @@ const Dashboard: React.FC<DashboardProps> = ({
       {isPickerOpen && (
         <DirectoryPicker
           gitService={gitService}
+          repo={currentRepo}
+          initialPath=""
           onSelect={(path) => {
             handleSettingsChange(
               isPickerOpen === "posts" ? "postsPath" : "imagesPath",
@@ -422,27 +425,19 @@ const Dashboard: React.FC<DashboardProps> = ({
             setIsPickerOpen(null);
           }}
           onClose={() => setIsPickerOpen(null)}
-          title={
-            isPickerOpen === "posts"
-              ? t("dashboard.settings.postsPath.pickerTitle")
-              : t("dashboard.settings.imagesPath.pickerTitle")
-          }
         />
       )}
 
       {collectionPathPicker && (
         <DirectoryPicker
           gitService={gitService}
+          repo={currentRepo}
+          initialPath=""
           onSelect={(path) => {
             collectionPathPicker.callback(path);
             setCollectionPathPicker(null);
           }}
           onClose={() => setCollectionPathPicker(null)}
-          title={
-            collectionPathPicker.type === "posts"
-              ? t("dashboard.settings.postsPath.pickerTitle")
-              : t("dashboard.settings.imagesPath.pickerTitle")
-          }
         />
       )}
 
@@ -455,8 +450,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       <NewCollectionModal
         isOpen={isNewCollectionModalOpen}
         onClose={() => setIsNewCollectionModalOpen(false)}
-        onSave={handleCollectionCreated}
-        gitService={gitService}
+        onCreated={handleCollectionCreated}
         onSelectPath={(type, callback) => setCollectionPathPicker({ type, callback })}
       />
 
@@ -467,9 +461,8 @@ const Dashboard: React.FC<DashboardProps> = ({
             setIsEditCollectionModalOpen(false);
             setCollectionToEdit(null);
           }}
-          onSave={handleCollectionUpdated}
+          onUpdated={handleCollectionUpdated}
           collection={collectionToEdit}
-          gitService={gitService}
           onSelectPath={(type, callback) => setCollectionPathPicker({ type, callback })}
         />
       )}
