@@ -9,6 +9,7 @@
 import type { APIRoute } from 'astro';
 import * as git from '../../../lib/git-client';
 import { verifySession, resolveGitCredentials, COOKIE_NAME } from '../../../lib/session';
+import { isPathAllowed } from '../../../lib/proxy-utils';
 
 // Whitelist of allowed actions
 const ALLOWED_ACTIONS = new Set([
@@ -24,6 +25,23 @@ const ALLOWED_ACTIONS = new Set([
   'findProductionUrl',
   'getRepoTree',
   'getRepoDetails',
+]);
+
+const PATH_ACTIONS = new Set([
+  'getRepoContents',
+  'listFiles',
+  'getFileContent',
+  'getFileSha',
+  'createFileFromString',
+  'updateFileContent',
+  'deleteFile',
+  'getRepoTree',
+]);
+
+const PATH_REQUIRED_ACTIONS = new Set([
+  'createFileFromString',
+  'updateFileContent',
+  'deleteFile',
 ]);
 
 export const POST: APIRoute = async ({ request, cookies }) => {
@@ -55,6 +73,26 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         JSON.stringify({ error: `Action "${action}" is not allowed` }),
         { status: 403, headers: { 'Content-Type': 'application/json' } }
       );
+    }
+
+    if (PATH_ACTIONS.has(action)) {
+      const path = typeof params.path === 'string' ? params.path : '';
+
+      if (PATH_REQUIRED_ACTIONS.has(action) && !path) {
+        return new Response(
+          JSON.stringify({ error: `Path is required for action "${action}"` }),
+          { status: 400, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (!isPathAllowed(path)) {
+        return new Response(
+          JSON.stringify({ error: `Path "${path}" is not allowed` }),
+          { status: 403, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+
+      params.path = path;
     }
 
     let result: any;
