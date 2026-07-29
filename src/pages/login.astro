@@ -2,29 +2,37 @@
 import { verifySession, hasEnvGitConfig, hasEnvAuth, COOKIE_NAME } from '../lib/session';
 import { getSsoRedirectUrl } from '../lib/auth-bridge';
 
-// Server-side logout: clear session cookie when ?logout=true
-// This is the fallback path when client-side CSRF cookie is missing
-// and the normal POST /api/auth/logout can't work.
-const logoutRequested = Astro.url.searchParams.get('logout') === 'true';
+// // @para-doc [#csa-cms-cfr-sso-loop-breaker]
+// Read error query param and logout flag
+const rawError = Astro.url.searchParams.get('error') || '';
+const logoutRequested = Astro.url.searchParams.get('logout') === 'true' || !!rawError;
+
 if (logoutRequested) {
   Astro.cookies.delete(COOKIE_NAME, { path: '/' });
-  // Also attempt to clear with different SameSite variants
   Astro.cookies.delete('pageel_cms_csrf', { path: '/' });
-  // Redirect to clean /login URL (remove query params)
-  return Astro.redirect('/login');
+  // If logout was requested WITHOUT an error parameter, redirect to clean /login
+  if (!rawError && Astro.url.searchParams.get('logout') === 'true') {
+    return Astro.redirect('/login');
+  }
 }
 
-// If already authenticated, redirect to CMS
+// If already authenticated and no logout/error requested, redirect to CMS
 const sessionCookie = Astro.cookies.get(COOKIE_NAME)?.value;
-if (sessionCookie) {
+if (sessionCookie && !logoutRequested) {
   const session = await verifySession(sessionCookie);
   if (session) {
     return Astro.redirect('/cms');
   }
 }
 
-// Handle login error message from query params
-const error = Astro.url.searchParams.get('error') || '';
+// // @para-doc [#csa-cms-cfr-login-error-banner]
+const ALLOWED_ERRORS: Record<string, string> = {
+  GITHUB_TOKEN_EXPIRED: 'Phiên làm việc GitHub Token của bạn đã hết hạn hoặc bị thu hồi. Vui lòng đăng nhập lại.',
+  REPO_ACCESS_DENIED: 'Không thể truy cập Repository trên GitHub. Vui lòng kiểm tra quyền hạn tài khoản.',
+  SESSION_EXPIRED: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+};
+
+const errorMessage = ALLOWED_ERRORS[rawError] || '';
 
 // Check if server has hardcoded Git config
 const envGitConfigured = hasEnvGitConfig();
@@ -32,7 +40,7 @@ const envGitConfigured = hasEnvGitConfig();
 const envAuthConfigured = hasEnvAuth();
 
 // Resolve PAGEEL_WORKER_URL (Worker API) for SSO bridge redirect
-const workerUrl = (typeof process !== 'undefined' ? process.env.PAGEEL_WORKER_URL : '') || import.meta.env.PAGEEL_WORKER_URL || (Astro.locals as any)?.runtime?.env?.PAGEEL_WORKER_URL || (typeof process !== 'undefined' ? process.env.PAGEEL_APP_URL : '') || import.meta.env.PAGEEL_APP_URL || (Astro.locals as any)?.runtime?.env?.PAGEEL_APP_URL || '';
+const workerUrl = (typeof process !== 'undefined' ? process.process?.env?.PAGEEL_WORKER_URL : '') || (typeof process !== 'undefined' ? process.env?.PAGEEL_WORKER_URL : '') || import.meta.env.PAGEEL_WORKER_URL || (Astro.locals as any)?.runtime?.env?.PAGEEL_WORKER_URL || (typeof process !== 'undefined' ? process.env?.PAGEEL_APP_URL : '') || import.meta.env.PAGEEL_APP_URL || (Astro.locals as any)?.runtime?.env?.PAGEEL_APP_URL || '';
 const hasSso = !!workerUrl;
 const ssoRedirectUrl = hasSso ? getSsoRedirectUrl(workerUrl, Astro.url.origin) : '';
 ---
@@ -288,7 +296,7 @@ const ssoRedirectUrl = hasSso ? getSsoRedirectUrl(workerUrl, Astro.url.origin) :
     </div>
 
     <div class="form-card">
-      {error && <div class="error-msg">{error}</div>}
+      {errorMessage && <div class="error-msg">{errorMessage}</div>}
       
       {hasSso ? (
         <!-- @para-doc [#csa-cms-app-int-opt-in] -->
@@ -351,5 +359,12 @@ const ssoRedirectUrl = hasSso ? getSsoRedirectUrl(workerUrl, Astro.url.origin) :
       {hasSso ? ' — App Mode' : envGitConfigured ? ' — Server Mode' : envAuthConfigured ? ' — Connect Mode' : ' — Open Mode'}
     </div>
   </div>
+
+  <script>
+    // Clean query parameters from URL bar after rendering error message or logout state
+    if (window.location.search) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  </script>
 </body>
 </html>
