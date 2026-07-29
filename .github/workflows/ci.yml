@@ -1,0 +1,75 @@
+# @para-doc [#csa-cms-cicd-quality-gate]
+name: CI Quality Gate
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  typecheck:
+    name: Type & Syntax Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: repo/package-lock.json
+
+      - name: Install dependencies
+        run: cd repo && npm ci
+
+      - name: Run TypeScript Check
+        run: cd repo && npx tsc --noEmit
+
+      - name: Run Astro Check
+        run: cd repo && npx astro check
+
+  test:
+    name: Unit & Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: repo/package-lock.json
+
+      - name: Install dependencies
+        run: cd repo && npm ci
+
+      - name: Run Vitest Suite
+        run: cd repo && npx vitest run
+
+  build:
+    name: Production Build Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: repo/package-lock.json
+
+      - name: Install dependencies
+        run: cd repo && npm ci
+
+      - name: Build Production Bundle
+        run: cd repo && npm run build
