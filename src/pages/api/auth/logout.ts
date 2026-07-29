@@ -87,12 +87,14 @@ export const POST: APIRoute = async ({ cookies, redirect, request, locals }) => 
     });
   }
 
-  const isProd = import.meta.env.PROD;
+  return buildLogoutResponse(request.url, env);
+};
 
-  // IMPORTANT: Do NOT use cookies.set() here — Astro does not merge
-  // cookies.set() headers into a raw `new Response()`. Only Astro's
-  // redirect() triggers header merging. We must set all Set-Cookie
-  // headers directly on the Response object.
+function buildLogoutResponse(requestUrl: string, env: any): Response {
+  const isProd = import.meta.env.PROD;
+  const url = new URL(requestUrl);
+  const requestedLogoutFlag = url.searchParams.get('logout') === 'true';
+  const defaultRedirectUrl = requestedLogoutFlag ? '/login?logout=true' : '/login';
 
   const hasSso = !!(
     (env.PAGEEL_WORKER_URL && env.PAGEEL_WORKER_URL.trim().length > 0) ||
@@ -103,10 +105,10 @@ export const POST: APIRoute = async ({ cookies, redirect, request, locals }) => 
     ))
   );
 
-  let redirectUrl = '/login';
+  let redirectUrl = defaultRedirectUrl;
   if (hasSso) {
     const workerUrl = getWorkerUrl(env);
-    const origin = new URL(request.url).origin;
+    const origin = url.origin;
     // // @para-doc [#csa-cms-cfr-explicit-logout-url]
     redirectUrl = `${workerUrl}/api/auth/logout?return_url=${encodeURIComponent(origin + '/login?logout=true')}`;
   }
@@ -134,14 +136,10 @@ export const POST: APIRoute = async ({ cookies, redirect, request, locals }) => 
   response.headers.append('Set-Cookie', `pageel_cms_csrf=; Path=/; ${expireDirective}${secureFlag}; SameSite=None`);
 
   return response;
-};
+}
 
-export const GET: APIRoute = async () => {
-  return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
-    status: 405,
-    headers: {
-      'Content-Type': 'application/json',
-      'Allow': 'POST',
-    },
-  });
+// // @para-doc [#csa-cms-cfr-logout-resilience]
+export const GET: APIRoute = async ({ request, locals }) => {
+  const env = (locals as any)?.runtime?.env || {};
+  return buildLogoutResponse(request.url, env);
 };

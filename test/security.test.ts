@@ -428,14 +428,16 @@ describe('Edge Security Hardening TDD Tests', () => {
   });
 
   describe('SaaS Logout API with POST and CSRF protection', () => {
-    it('should reject GET requests with 405 Method Not Allowed', async () => {
+    it('should allow GET logout request, clear cookies and redirect with 302', async () => {
       const context = {
-        request: new Request('http://localhost/api/auth/logout', { method: 'GET' }),
-        cookies: { delete: vi.fn() },
+        request: new Request('http://localhost/api/auth/logout?logout=true', { method: 'GET' }),
+        cookies: { delete: vi.fn(), get: vi.fn() },
+        locals: {},
       } as any;
 
       const response = await handleLogoutGET(context);
-      expect(response.status).toBe(405);
+      expect(response.status).toBe(302);
+      expect(response.headers.get('Location')).toBe('/login?logout=true');
     });
 
     it('should reject POST request if CSRF token is missing or invalid', async () => {
