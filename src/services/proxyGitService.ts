@@ -11,6 +11,15 @@
 
 import type { IGitService, ContentInfo, RepoTreeInfo, RepoInfo } from '../types';
 
+// @para-doc [#csa-cms-cfr-error-class-impl]
+export class CloudflareChallengeError extends Error {
+  readonly isCloudflareChallenge: boolean = true;
+  constructor(message: string = 'Cloudflare challenge required') {
+    super(message);
+    this.name = 'CloudflareChallengeError';
+  }
+}
+
 export class ProxyGitAdapter implements IGitService {
   private baseUrl: string;
 
@@ -33,6 +42,12 @@ export class ProxyGitAdapter implements IGitService {
       // Session expired — redirect to login
       window.location.href = '/login';
       throw new Error('Session expired');
+    }
+
+    // // @para-doc [#csa-cms-cfr-error-classification]
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('text/html') || !contentType.includes('application/json')) {
+      throw new CloudflareChallengeError(`Cloudflare challenge detected (${response.status})`);
     }
 
     if (!response.ok) {

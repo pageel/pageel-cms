@@ -14,6 +14,10 @@ export const translations = {
         invalidGiteaUrl: 'Invalid self-hosted instance URL. It must be a valid URL (e.g., https://gitea.example.com).',
         noWritePermissions: 'You do not have write permissions for this repository.',
         loginFailed: 'Login failed: {{message}}',
+        cloudflareTitle: 'Cloudflare Security Verification Required',
+        cloudflareDesc: 'Your connection was challenged by Cloudflare DDoS Protection (WAF). Please complete the verification in your browser or retry.',
+        retry: 'Retry Connection',
+        emergencyLogout: 'Emergency Logout',
       }
     },
     githubConnect: {
@@ -574,6 +578,10 @@ export const translations = {
         invalidGiteaUrl: 'URL instance self-hosted không hợp lệ. Phải là một URL hợp lệ (ví dụ: https://gitea.example.com).',
         noWritePermissions: 'Bạn không có quyền ghi vào kho chứa này.',
         loginFailed: 'Đăng nhập thất bại: {{message}}',
+        cloudflareTitle: 'Yêu cầu Xác thực An ninh Cloudflare',
+        cloudflareDesc: 'Kết nối của bạn bị tạm dừng bởi cơ chế bảo vệ Cloudflare DDoS (WAF). Vui lòng hoàn thành xác thực trình duyệt hoặc bấm Thử lại.',
+        retry: 'Thử lại kết nối',
+        emergencyLogout: 'Đăng xuất khẩn cấp',
       }
     },
     githubConnect: {

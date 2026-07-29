@@ -5,9 +5,9 @@
  * Server handles auth via cookie, client uses ProxyGitAdapter.
  */
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { ServiceType } from '../types';
-import { ProxyGitAdapter } from '../services/proxyGitService';
+import { ProxyGitAdapter, CloudflareChallengeError } from '../services/proxyGitService';
 import { useAuthStore } from '../features/auth/store';
 
 export function useSessionRestore() {
@@ -21,7 +21,10 @@ export function useSessionRestore() {
     clearAuth,
   } = useAuthStore();
 
-  // @para-doc [#csa-cms-client-logout-post]
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // // @para-doc [#csa-cms-client-logout-post]
+  // // @para-doc [#csa-cms-cfr-logout-resilience]
   const performSimpleLogout = useCallback(async () => {
     clearAuth();
     // Redirect browser to logout endpoint to clear all session cookies (local + sso)
@@ -32,22 +35,24 @@ export function useSessionRestore() {
 
     const csrfToken = getCookie('pageel_cms_csrf');
     if (csrfToken) {
-      // NOTE: Do NOT clear the CSRF cookie here — the server needs it
-      // to validate the logout request. Server response clears cookies
-      // via Set-Cookie headers after successful CSRF validation.
+      try {
+        // // @para-doc [#csa-cms-cfr-logout-fallback-impl]
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/api/auth/logout?csrf_token=${encodeURIComponent(csrfToken)}`;
 
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = `/api/auth/logout?csrf_token=${encodeURIComponent(csrfToken)}`;
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'csrf_token';
+        input.value = csrfToken;
+        form.appendChild(input);
 
-      const input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = 'csrf_token';
-      input.value = csrfToken;
-      form.appendChild(input);
-
-      document.body.appendChild(form);
-      form.submit();
+        document.body.appendChild(form);
+        form.submit();
+      } catch (err) {
+        console.warn('POST form submit failed during logout, falling back to GET:', err);
+        window.location.href = '/login?logout=true';
+      }
     } else {
       // CSRF cookie missing (Astro may drop it on SSO callback redirect).
       // Navigate to login with logout flag so the server clears the session cookie.
@@ -64,53 +69,81 @@ export function useSessionRestore() {
     return () => window.removeEventListener('auth-error', handleAuthError);
   }, [performSimpleLogout]);
 
-  // Initialize session on mount — server already authenticated via cookie
-  useEffect(() => {
-    const initSession = async () => {
-      setLoading(true);
-      try {
-        // Create proxy adapter (all Git ops go through server)
-        const proxyAdapter = new ProxyGitAdapter();
+  // // @para-doc [#csa-cms-cfr-retry-impl]
+  const initSessionWithRetry = useCallback(async (attempt: number = 1): Promise<void> => {
+    if (retryTimerRef.current) {
+      clearTimeout(retryTimerRef.current);
+      retryTimerRef.current = null;
+    }
 
-        // Fetch repo details via server proxy to get real data
-        const repoData = await proxyAdapter.getRepoDetails();
+    setLoading(true);
+    setError(null);
 
-        // Derive user info from repo data
-        const owner = repoData?.owner?.login || 'user';
-        const service: ServiceType = 'github'; // TODO: read from server config
+    try {
+      const proxyAdapter = new ProxyGitAdapter();
+      const repoData = await proxyAdapter.getRepoDetails();
 
-        const userData = {
-          login: owner,
-          avatar_url: `https://github.com/${owner}.png`,
-          html_url: `https://github.com/${owner}`,
-          name: owner,
-        };
+      const owner = repoData?.owner?.login || 'user';
+      const service: ServiceType = 'github';
 
-        setUser(userData);
-        setRepo(repoData);
-        setGitService(proxyAdapter);
-        setServiceType(service);
-      } catch (e) {
-        console.error('Session init failed:', e);
+      const userData = {
+        login: owner,
+        avatar_url: `https://github.com/${owner}.png`,
+        html_url: `https://github.com/${owner}`,
+        name: owner,
+      };
+
+      setUser(userData);
+      setRepo(repoData);
+      setGitService(proxyAdapter);
+      setServiceType(service);
+    } catch (e: any) {
+      console.error(`Session init failed (attempt ${attempt}):`, e);
+
+      if (e instanceof CloudflareChallengeError || e?.isCloudflareChallenge) {
+        // // @para-doc [#csa-cms-cfr-retry-backoff]
+        if (attempt <= 3) {
+          const backoffDelay = Math.pow(3, attempt - 1) * 1000; // 1s, 3s, 9s
+          console.warn(`Cloudflare Challenge detected. Retrying in ${backoffDelay / 1000}s (Attempt ${attempt}/3)...`);
+
+          retryTimerRef.current = setTimeout(() => {
+            initSessionWithRetry(attempt + 1);
+          }, backoffDelay);
+          return;
+        }
+
+        // // @para-doc [#csa-cms-cfr-no-blind-redirect]
+        setError('cloudflare_challenge');
+      } else {
         setError('Failed to initialize CMS session');
-        // Likely auth expired — redirect to login
         window.location.href = '/login';
-      } finally {
-        setLoading(false);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [setLoading, setError, setUser, setRepo, setGitService, setServiceType]);
+
+  // Initialize session on mount
+  useEffect(() => {
+    initSessionWithRetry(1);
+    return () => {
+      if (retryTimerRef.current) {
+        clearTimeout(retryTimerRef.current);
       }
     };
+  }, [initSessionWithRetry]);
 
-    initSession();
-  }, []);
+  // // @para-doc [#csa-cms-cfr-retry-export]
+  const retryInit = useCallback(() => {
+    initSessionWithRetry(1);
+  }, [initSessionWithRetry]);
 
-  // handleLogin is no longer needed (server handles via /api/auth/login)
-  // Keep stub for interface compat during migration
-  const handleLogin = useCallback(async () => {
-    // No-op: login is handled by server-side form POST
-  }, []);
+  const handleLogin = useCallback(async () => {}, []);
 
   return {
     handleLogin,
     performSimpleLogout,
+    retryInit,
   };
 }
+

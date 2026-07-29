@@ -8,6 +8,18 @@ import { COOKIE_NAME } from '../../../lib/session';
  * TEMPORARY — remove after confirming logout works.
  */
 export const GET: APIRoute = async ({ cookies, request, locals }) => {
+  // Double Gate Security Check: CMS_DEBUG must be 'true' AND ?key must match CMS_SECRET
+  const cmsDebug = process.env.CMS_DEBUG || (import.meta.env as any)?.CMS_DEBUG;
+  const urlKey = new URL(request.url).searchParams.get('key');
+  const cmsSecret = process.env.CMS_SECRET || (import.meta.env as any)?.CMS_SECRET;
+
+  if (cmsDebug !== 'true' || !cmsSecret || urlKey !== cmsSecret) {
+    return new Response(JSON.stringify({ error: 'Not Found' }), {
+      status: 404,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
   const sessionCookie = cookies.get(COOKIE_NAME)?.value;
   const csrfCookie = cookies.get('pageel_cms_csrf')?.value;
 
