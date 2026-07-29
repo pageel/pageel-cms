@@ -39,16 +39,16 @@ describe('Re-Auth Dual UI & Escape Hatch Logic (login.astro logic)', () => {
     const needsForceReauth = isTokenExpired || isLogout;
     return {
       needsForceReauth,
-      buttonText: needsForceReauth ? 'Tái xác thực & Đăng nhập lại ↗' : 'Sign In with Pageel App',
+      buttonText: needsForceReauth ? 'Re-authenticate & Sign In ↗' : 'Sign In with Pageel App',
       showEscapeHatch: needsForceReauth,
       escapeHatchUrl: '/api/auth/logout?logout=true',
     };
   }
 
-  it('should enable force reauth, set button text to "Tái xác thực & Đăng nhập lại ↗", and show escape hatch when token is expired', () => {
+  it('should enable force reauth, set button text to "Re-authenticate & Sign In ↗", and show escape hatch when token is expired', () => {
     const state = getDualUiState('GITHUB_TOKEN_EXPIRED', false);
     expect(state.needsForceReauth).toBe(true);
-    expect(state.buttonText).toBe('Tái xác thực & Đăng nhập lại ↗');
+    expect(state.buttonText).toBe('Re-authenticate & Sign In ↗');
     expect(state.showEscapeHatch).toBe(true);
     expect(state.escapeHatchUrl).toBe('/api/auth/logout?logout=true');
   });
@@ -56,7 +56,7 @@ describe('Re-Auth Dual UI & Escape Hatch Logic (login.astro logic)', () => {
   it('should enable force reauth and show escape hatch when isLogout is true', () => {
     const state = getDualUiState('', true);
     expect(state.needsForceReauth).toBe(true);
-    expect(state.buttonText).toBe('Tái xác thực & Đăng nhập lại ↗');
+    expect(state.buttonText).toBe('Re-authenticate & Sign In ↗');
     expect(state.showEscapeHatch).toBe(true);
   });
 
@@ -67,4 +67,22 @@ describe('Re-Auth Dual UI & Escape Hatch Logic (login.astro logic)', () => {
     expect(state.showEscapeHatch).toBe(false);
   });
 });
+
+describe('GET Logout Fallback Handler (logout.ts)', () => {
+  it('should allow GET logout request, clear cookies and redirect with 302', async () => {
+    const { GET } = await import('../src/pages/api/auth/logout');
+    const mockRequest = new Request('http://localhost:4321/api/auth/logout?logout=true');
+    const response = await GET({
+      request: mockRequest,
+      cookies: {
+        get: () => undefined,
+      },
+      locals: {},
+    } as any);
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get('Location')).toBe('/login?logout=true');
+  });
+});
+
 

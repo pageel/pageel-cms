@@ -27,9 +27,9 @@ if (sessionCookie && !logoutRequested) {
 
 // // @para-doc [#csa-cms-cfr-login-error-banner]
 const ALLOWED_ERRORS: Record<string, string> = {
-  GITHUB_TOKEN_EXPIRED: 'Phiên làm việc GitHub Token của bạn đã hết hạn hoặc bị thu hồi. Vui lòng đăng nhập lại.',
-  REPO_ACCESS_DENIED: 'Không thể truy cập Repository trên GitHub. Vui lòng kiểm tra quyền hạn tài khoản.',
-  SESSION_EXPIRED: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+  GITHUB_TOKEN_EXPIRED: 'Your GitHub Token session has expired or been revoked. Please sign in again.',
+  REPO_ACCESS_DENIED: 'Unable to access GitHub repository. Please verify account permissions.',
+  SESSION_EXPIRED: 'Your login session has expired. Please sign in again.',
 };
 
 const errorMessage = ALLOWED_ERRORS[rawError] || '';
@@ -313,12 +313,12 @@ const ssoRedirectUrl = baseSsoUrl ? `${baseSsoUrl}${ssoRedirectParams}` : '';
           <!-- // @para-doc [#csa-cms-cfr-reauth-button-ui] -->
           <!-- @para-doc [#csa-cms-app-int-button] -->
           <a href={ssoRedirectUrl} class="sso-button">
-            {needsForceReauth ? 'Tái xác thực & Đăng nhập lại ↗' : 'Sign In with Pageel App'}
+            {needsForceReauth ? 'Re-authenticate & Sign In ↗' : 'Sign In with Pageel App'}
           </a>
           <!-- // @para-doc [#csa-cms-cfr-full-logout-escape-hatch] -->
           {needsForceReauth && (
             <a href="/api/auth/logout?logout=true" class="escape-hatch-link" style="display: block; text-align: center; margin-top: 0.85rem; font-size: 0.8rem; color: #666; text-decoration: underline;">
-              Đăng xuất hoàn toàn & Đổi tài khoản khác
+              Full Logout & Switch Account
             </a>
           )}
         </div>
@@ -327,7 +327,7 @@ const ssoRedirectUrl = baseSsoUrl ? `${baseSsoUrl}${ssoRedirectParams}` : '';
           <!-- // @para-doc [#csa-cms-cfr-server-env-hint] -->
           {envGitConfigured && isTokenExpired && (
             <div style="background: #fff5f5; border: 1px solid #feb2b2; border-radius: 6px; padding: 0.75rem; margin-bottom: 1rem; font-size: 0.85rem; color: #c53030; line-height: 1.4;">
-              ⚠️ <strong>Server Configuration Warning:</strong> Biến <code>GITHUB_TOKEN</code> trong file <code>.env</code> trên máy chủ đã hết hạn hoặc bị từ chối. Vui lòng cập nhật file <code>.env</code> trên máy chủ.
+              ⚠️ <strong>Server Configuration Warning:</strong> The <code>GITHUB_TOKEN</code> variable in server <code>.env</code> has expired or been revoked. Please update <code>.env</code> on server.
             </div>
           )}
 
@@ -352,7 +352,7 @@ const ssoRedirectUrl = baseSsoUrl ? `${baseSsoUrl}${ssoRedirectParams}` : '';
                 />
                 <p class="help-text">
                   {isTokenExpired ? (
-                    <span style="color: #d9381e;">💡 Token cũ của bạn đã bị từ chối. Vui lòng tạo Token mới tại <a href="https://github.com/settings/tokens" target="_blank" style="color: #d9381e; text-decoration: underline;">GitHub Settings ↗</a></span>
+                    <span style="color: #d9381e;">💡 Your previous Token was rejected. Please generate a new Token at <a href="https://github.com/settings/tokens" target="_blank" style="color: #d9381e; text-decoration: underline;">GitHub Settings ↗</a></span>
                   ) : (
                     'Personal Access Token with repo scope'
                   )}
