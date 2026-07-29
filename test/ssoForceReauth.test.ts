@@ -40,3 +40,53 @@ describe('SSO Force Re-Authentication Protocol (login.astro logic)', () => {
     expect(result).toBe('');
   });
 });
+
+describe('Connect Mode Token Autofill Protection (login.astro logic)', () => {
+  /**
+   * Helper replicating login.astro Connect Mode token input attributes
+   * // @para-doc [#csa-cms-cfr-form-clear-autofill]
+   */
+  function getTokenInputAttributes(rawError: string) {
+    const isTokenExpired = rawError === 'GITHUB_TOKEN_EXPIRED';
+    return {
+      autocomplete: isTokenExpired ? 'off' : 'current-password',
+      value: isTokenExpired ? '' : undefined,
+      showTokenExpiredHint: isTokenExpired,
+    };
+  }
+
+  it('should set autocomplete="off", empty value, and show hint link when token is expired', () => {
+    const attrs = getTokenInputAttributes('GITHUB_TOKEN_EXPIRED');
+    expect(attrs.autocomplete).toBe('off');
+    expect(attrs.value).toBe('');
+    expect(attrs.showTokenExpiredHint).toBe(true);
+  });
+
+  it('should preserve default autocomplete and undefined value when no error', () => {
+    const attrs = getTokenInputAttributes('');
+    expect(attrs.autocomplete).toBe('current-password');
+    expect(attrs.value).toBeUndefined();
+    expect(attrs.showTokenExpiredHint).toBe(false);
+  });
+});
+
+describe('Server Mode Env Error Diagnostic (login.astro logic)', () => {
+  /**
+   * Helper replicating login.astro Server Mode env warning condition
+   * // @para-doc [#csa-cms-cfr-server-env-hint]
+   */
+  function shouldShowServerEnvWarning(envGitConfigured: boolean, rawError: string) {
+    const isTokenExpired = rawError === 'GITHUB_TOKEN_EXPIRED';
+    return envGitConfigured && isTokenExpired;
+  }
+
+  it('should return true when Server Mode is active and token is expired', () => {
+    expect(shouldShowServerEnvWarning(true, 'GITHUB_TOKEN_EXPIRED')).toBe(true);
+  });
+
+  it('should return false when Server Mode is not active or token is not expired', () => {
+    expect(shouldShowServerEnvWarning(false, 'GITHUB_TOKEN_EXPIRED')).toBe(false);
+    expect(shouldShowServerEnvWarning(true, 'REPO_ACCESS_DENIED')).toBe(false);
+  });
+});
+

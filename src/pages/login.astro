@@ -316,6 +316,13 @@ const ssoRedirectUrl = baseSsoUrl ? `${baseSsoUrl}${ssoRedirectParams}` : '';
         </div>
       ) : (
         <form method="POST" action="/api/auth/login">
+          <!-- // @para-doc [#csa-cms-cfr-server-env-hint] -->
+          {envGitConfigured && isTokenExpired && (
+            <div style="background: #fff5f5; border: 1px solid #feb2b2; border-radius: 6px; padding: 0.75rem; margin-bottom: 1rem; font-size: 0.85rem; color: #c53030; line-height: 1.4;">
+              ⚠️ <strong>Server Configuration Warning:</strong> Biến <code>GITHUB_TOKEN</code> trong file <code>.env</code> trên máy chủ đã hết hạn hoặc bị từ chối. Vui lòng cập nhật file <code>.env</code> trên máy chủ.
+            </div>
+          )}
+
           {!envGitConfigured && (
             <>
               <div class="field">
@@ -323,10 +330,25 @@ const ssoRedirectUrl = baseSsoUrl ? `${baseSsoUrl}${ssoRedirectParams}` : '';
                 <input type="text" id="repo" name="repo" placeholder="owner/repo" required />
                 <p class="help-text">GitHub repository (e.g. myuser/my-blog)</p>
               </div>
+              <!-- // @para-doc [#csa-cms-cfr-form-clear-autofill] -->
               <div class="field">
                 <label for="token">GitHub Token</label>
-                <input type="password" id="token" name="token" placeholder="ghp_..." required />
-                <p class="help-text">Personal Access Token with repo scope</p>
+                <input
+                  type="password"
+                  id="token"
+                  name="token"
+                  placeholder="ghp_..."
+                  required
+                  autocomplete={isTokenExpired ? "off" : "current-password"}
+                  value={isTokenExpired ? "" : undefined}
+                />
+                <p class="help-text">
+                  {isTokenExpired ? (
+                    <span style="color: #d9381e;">💡 Token cũ của bạn đã bị từ chối. Vui lòng tạo Token mới tại <a href="https://github.com/settings/tokens" target="_blank" style="color: #d9381e; text-decoration: underline;">GitHub Settings ↗</a></span>
+                  ) : (
+                    'Personal Access Token with repo scope'
+                  )}
+                </p>
               </div>
               <div class="divider"><span>Credentials</span></div>
             </>
