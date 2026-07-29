@@ -20,6 +20,14 @@ export class CloudflareChallengeError extends Error {
   }
 }
 
+export class UpstreamAuthError extends Error {
+  readonly isUpstreamAuth: boolean = true;
+  constructor(public code: string, message: string) {
+    super(message);
+    this.name = 'UpstreamAuthError';
+  }
+}
+
 export class ProxyGitAdapter implements IGitService {
   private baseUrl: string;
 
@@ -38,16 +46,24 @@ export class ProxyGitAdapter implements IGitService {
       body: JSON.stringify({ action, params }),
     });
 
-    if (response.status === 401) {
-      // Session expired — redirect to login
-      window.location.href = '/login';
-      throw new Error('Session expired');
+    const contentType = response.headers.get('content-type') || '';
+
+    // 1. Content-Type guard: detect CF challenge HTML response
+    // // @para-doc [#csa-cms-cfr-error-classification]
+    if (contentType.includes('text/html') || (!contentType.includes('application/json') && contentType !== '')) {
+      throw new CloudflareChallengeError(`Cloudflare challenge detected (${response.status})`);
     }
 
-    // // @para-doc [#csa-cms-cfr-error-classification]
-    const contentType = response.headers.get('content-type') || '';
-    if (contentType.includes('text/html') || !contentType.includes('application/json')) {
-      throw new CloudflareChallengeError(`Cloudflare challenge detected (${response.status})`);
+    // 2. Handle 401 / 403 Auth errors from proxy or upstream GitHub API
+    if (response.status === 401 || response.status === 403) {
+      const errData = await response.json().catch(() => ({}));
+      if (errData.code) {
+        throw new UpstreamAuthError(errData.code, errData.error || 'Upstream auth failed');
+      }
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('auth-error'));
+      }
+      throw new UpstreamAuthError('GITHUB_TOKEN_EXPIRED', 'Session expired or token invalid');
     }
 
     if (!response.ok) {

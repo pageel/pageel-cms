@@ -1,11 +1,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { ProxyGitAdapter, CloudflareChallengeError } from '../src/services/proxyGitService';
+import { ProxyGitAdapter, CloudflareChallengeError, UpstreamAuthError } from '../src/services/proxyGitService';
 import fs from 'node:fs';
 import path from 'node:path';
 
-describe('Cloudflare Resilience & Circuit Breaker', () => {
+describe('Cloudflare Resilience & Upstream Auth Errors', () => {
   const fixturePath = path.join(__dirname, 'fixtures/cloudflare-challenge-503.html');
-  const htmlFixture = fs.readFileSync(fixturePath, 'utf-8');
+  let htmlFixture = '<html>Cloudflare Under Attack</html>';
+  if (fs.existsSync(fixturePath)) {
+    htmlFixture = fs.readFileSync(fixturePath, 'utf-8');
+  }
 
   beforeEach(() => {
     vi.restoreAllMocks();
@@ -38,6 +41,47 @@ describe('Cloudflare Resilience & Circuit Breaker', () => {
     expect(err).toBeInstanceOf(CloudflareChallengeError);
     expect(err.name).toBe('CloudflareChallengeError');
     expect(err.isCloudflareChallenge).toBe(true);
+  });
+
+  it('should throw UpstreamAuthError with code when status is 401 and JSON has code', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      headers: {
+        get: (header: string) => (header.toLowerCase() === 'content-type' ? 'application/json' : null),
+      },
+      json: vi.fn().mockResolvedValue({ error: 'Bad credentials', code: 'GITHUB_TOKEN_EXPIRED' }),
+    }));
+
+    const adapter = new ProxyGitAdapter();
+    await expect(adapter.getRepoDetails()).rejects.toThrow(UpstreamAuthError);
+
+    try {
+      await adapter.getRepoDetails();
+    } catch (err: any) {
+      expect(err.code).toBe('GITHUB_TOKEN_EXPIRED');
+      expect(err.isUpstreamAuth).toBe(true);
+    }
+  });
+
+  it('should throw UpstreamAuthError with REPO_ACCESS_DENIED when status is 403 JSON', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: false,
+      status: 403,
+      headers: {
+        get: (header: string) => (header.toLowerCase() === 'content-type' ? 'application/json' : null),
+      },
+      json: vi.fn().mockResolvedValue({ error: 'Access denied', code: 'REPO_ACCESS_DENIED' }),
+    }));
+
+    const adapter = new ProxyGitAdapter();
+    await expect(adapter.getRepoDetails()).rejects.toThrow(UpstreamAuthError);
+
+    try {
+      await adapter.getRepoDetails();
+    } catch (err: any) {
+      expect(err.code).toBe('REPO_ACCESS_DENIED');
+    }
   });
 
   // // @para-doc [#csa-cms-cfr-retry-backoff]

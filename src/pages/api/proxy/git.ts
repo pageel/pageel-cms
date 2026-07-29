@@ -149,8 +149,27 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     });
   } catch (error: any) {
     console.error('[proxy/git] Error:', error.message);
+
+    // // @para-doc [#csa-cms-cfr-proxy-auth-classification]
+    const status = error.status || error.statusCode || 500;
+    const msg = error.message || '';
+
+    if (status === 401 || msg.includes('Bad credentials') || msg.includes('Requires authentication')) {
+      return new Response(
+        JSON.stringify({ error: 'GitHub OAuth token expired or revoked', code: 'GITHUB_TOKEN_EXPIRED' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (status === 403 || status === 404 || msg.includes('Not Found') || msg.includes('Resource not accessible')) {
+      return new Response(
+        JSON.stringify({ error: 'Repository access denied or token scope insufficient', code: 'REPO_ACCESS_DENIED' }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     return new Response(
-      JSON.stringify({ error: error.message || 'Internal proxy error' }),
+      JSON.stringify({ error: error.message || 'Internal proxy error', code: 'INTERNAL_ERROR' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
