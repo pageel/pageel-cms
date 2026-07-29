@@ -43,10 +43,11 @@ const envAuthConfigured = hasEnvAuth();
 const workerUrl = (typeof process !== 'undefined' ? process.env?.PAGEEL_WORKER_URL : '') || import.meta.env.PAGEEL_WORKER_URL || (Astro.locals as any)?.runtime?.env?.PAGEEL_WORKER_URL || (typeof process !== 'undefined' ? process.env?.PAGEEL_APP_URL : '') || import.meta.env.PAGEEL_APP_URL || (Astro.locals as any)?.runtime?.env?.PAGEEL_APP_URL || '';
 // // @para-doc [#csa-cms-cfr-sso-force-reauth]
 const isTokenExpired = rawError === 'GITHUB_TOKEN_EXPIRED';
+const needsForceReauth = isTokenExpired || logoutRequested;
 const hasSso = !!workerUrl;
 const baseSsoUrl = hasSso ? getSsoRedirectUrl(workerUrl, Astro.url.origin) : '';
 const ssoSeparator = baseSsoUrl.includes('?') ? '&' : '?';
-const ssoRedirectParams = isTokenExpired ? `${ssoSeparator}force_reauth=true&prompt=consent` : '';
+const ssoRedirectParams = needsForceReauth ? `${ssoSeparator}force_reauth=true&prompt=consent` : '';
 const ssoRedirectUrl = baseSsoUrl ? `${baseSsoUrl}${ssoRedirectParams}` : '';
 ---
 
@@ -309,10 +310,17 @@ const ssoRedirectUrl = baseSsoUrl ? `${baseSsoUrl}${ssoRedirectParams}` : '';
           <p style="font-size: 0.85rem; color: #555; text-align: center; margin-bottom: 1.25rem; line-height: 1.45;">
             SSO Mode is active. You will be redirected to Pageel App for authentication.
           </p>
+          <!-- // @para-doc [#csa-cms-cfr-reauth-button-ui] -->
           <!-- @para-doc [#csa-cms-app-int-button] -->
           <a href={ssoRedirectUrl} class="sso-button">
-            Sign In with Pageel App
+            {needsForceReauth ? 'Tái xác thực & Đăng nhập lại ↗' : 'Sign In with Pageel App'}
           </a>
+          <!-- // @para-doc [#csa-cms-cfr-full-logout-escape-hatch] -->
+          {needsForceReauth && (
+            <a href="/api/auth/logout?logout=true" class="escape-hatch-link" style="display: block; text-align: center; margin-top: 0.85rem; font-size: 0.8rem; color: #666; text-decoration: underline;">
+              Đăng xuất hoàn toàn & Đổi tài khoản khác
+            </a>
+          )}
         </div>
       ) : (
         <form method="POST" action="/api/auth/login">
@@ -388,9 +396,14 @@ const ssoRedirectUrl = baseSsoUrl ? `${baseSsoUrl}${ssoRedirectParams}` : '';
   </div>
 
   <script>
-    // Clean query parameters from URL bar after rendering error message or logout state
-    if (window.location.search) {
-      window.history.replaceState({}, document.title, window.location.pathname);
+    // // @para-doc [#csa-cms-cfr-client-cache-purge]
+    if (window.location.search.includes('logout=true') || window.location.search.includes('error=')) {
+      try {
+        localStorage.clear();
+        sessionStorage.clear();
+      } catch (e) {
+        console.warn('Unable to clear client storage cache:', e);
+      }
     }
   </script>
 </body>

@@ -107,7 +107,8 @@ export const POST: APIRoute = async ({ cookies, redirect, request, locals }) => 
   if (hasSso) {
     const workerUrl = getWorkerUrl(env);
     const origin = new URL(request.url).origin;
-    redirectUrl = `${workerUrl}/api/auth/logout?return_url=${encodeURIComponent(origin + '/login')}`;
+    // // @para-doc [#csa-cms-cfr-explicit-logout-url]
+    redirectUrl = `${workerUrl}/api/auth/logout?return_url=${encodeURIComponent(origin + '/login?logout=true')}`;
   }
 
   const secureFlag = isProd ? '; Secure' : '';

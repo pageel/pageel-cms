@@ -30,6 +30,14 @@ export function useSessionRestore() {
     // Preserve React Zustand state during page unload to prevent session error flash
     setIsLoggingOut(true);
 
+    // // @para-doc [#csa-cms-cfr-client-cache-purge]
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch (e) {
+      console.warn('Unable to clear client storage cache on logout:', e);
+    }
+
     // Timeout Watchdog fallback: force navigate after 1.5s if POST form submit unresponsively hangs
     setTimeout(() => {
       window.location.href = '/login?logout=true';
