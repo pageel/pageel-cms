@@ -5,7 +5,27 @@ All notable changes to Pageel CMS will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
----
+## [2.5.4] - 2026-07-29
+
+### Added
+
+- **SSO Force Re-Authentication Protocol**: Updated `login.astro` to append `?force_reauth=true&prompt=consent` to `ssoRedirectUrl` when `rawError === 'GITHUB_TOKEN_EXPIRED'`, forcing Pageel App Worker to invalidate KV session cache and prompt GitHub OAuth re-consent (`csa-cms-cfr-sso-force-reauth`).
+- **Connect Mode Token Autofill Defense**: Added `autocomplete="off"`, cleared default value (`value=""`), and rendered help text link to GitHub Settings in Connect Mode when token is expired (`csa-cms-cfr-form-clear-autofill`).
+- **Server Mode Env Warning**: Added dedicated server environment error hint banner when `envGitConfigured === true` and token is expired (`csa-cms-cfr-server-env-hint`).
+
+## [2.5.3] - 2026-07-29
+
+### Added
+
+- **Cloudflare Under Attack Challenge Resilience**: Classified `CloudflareChallengeError` (Content-Type `text/html` guard) in `proxyGitService.ts` with automatic 3-attempt Exponential Backoff (1s ➔ 3s ➔ 9s) and interactive "Thử lại" / "Xác thực Cloudflare ↗" UI in `App.tsx`.
+- **Smooth Session Logout UX Overlay**: Replaced jarring yellow session error card during logout with an `isLoggingOut` full-screen spinner overlay ("Đang đăng xuất...") and 1.5s Timeout Watchdog fallback.
+- **SSO Token Expiration 302 Loop Breaker**: Classified Octokit 401 (`GITHUB_TOKEN_EXPIRED`) and 403/404 (`REPO_ACCESS_DENIED`) status codes in `/api/proxy/git`. Updated `login.astro` SSR frontmatter to delete session & CSRF cookies immediately on `?logout=true` or `?error=...`, completely breaking the 302 redirect loop and rendering sanitized error banners with automatic `history.replaceState` URL cleanup.
+- **Sanitized Error Banner & URL Clean**: Added `ALLOWED_ERRORS` Whitelist filtering `rawError` query parameters against XSS/Phishing injection, rendering localized Vietnamese error messages.
+
+### Refactored & Fixed
+
+- **CI TypeScript Type Check Alignment**: Fixed `process.env` typo in `login.astro` and aligned local Pre-commit gate to run `npx astro sync && npx tsc --noEmit` before git commits.
+- **Governance & Template Generalization**: Updated project `maintenance.md` §1, `.agents/skills/cicd/SKILL.md`, and plan templates (`detail-plan-hardened.md`, `detail-plan.md`, `detail-plan-tdd.md`) to enforce Astro typecheck pre-commit gates and support OSS PR Auto-Merge Protocol (`maintenance.md` §3).
 
 ## [2.5.0] - 2026-07-13
 
