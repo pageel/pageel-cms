@@ -40,7 +40,7 @@ const envGitConfigured = hasEnvGitConfig();
 const envAuthConfigured = hasEnvAuth();
 
 // Resolve PAGEEL_WORKER_URL (Worker API) for SSO bridge redirect
-const workerUrl = (typeof process !== 'undefined' ? process.process?.env?.PAGEEL_WORKER_URL : '') || (typeof process !== 'undefined' ? process.env?.PAGEEL_WORKER_URL : '') || import.meta.env.PAGEEL_WORKER_URL || (Astro.locals as any)?.runtime?.env?.PAGEEL_WORKER_URL || (typeof process !== 'undefined' ? process.env?.PAGEEL_APP_URL : '') || import.meta.env.PAGEEL_APP_URL || (Astro.locals as any)?.runtime?.env?.PAGEEL_APP_URL || '';
+const workerUrl = (typeof process !== 'undefined' ? process.env?.PAGEEL_WORKER_URL : '') || import.meta.env.PAGEEL_WORKER_URL || (Astro.locals as any)?.runtime?.env?.PAGEEL_WORKER_URL || (typeof process !== 'undefined' ? process.env?.PAGEEL_APP_URL : '') || import.meta.env.PAGEEL_APP_URL || (Astro.locals as any)?.runtime?.env?.PAGEEL_APP_URL || '';
 const hasSso = !!workerUrl;
 const ssoRedirectUrl = hasSso ? getSsoRedirectUrl(workerUrl, Astro.url.origin) : '';
 ---
