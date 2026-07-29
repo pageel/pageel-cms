@@ -37,11 +37,12 @@ Triggers automatically upon pushing a git tag matching `v*` (e.g. `v2.5.0`):
 
 ---
 
-## 3. Dependabot Security Automation (`.github/dependabot.yml`)
+## 3. Dependabot Security Automation & Smart Auto-Merge
 
 - **Schedule:** Monthly security sweeps (`interval: "monthly"`).
 - **Limit:** Maximum 3 open pull requests simultaneously.
 - **Scope:** Direct dependencies only, ignoring major breaking version bumps.
+- **Smart Auto-Merge (`.github/workflows/dependabot-auto-merge.yml`):** Automatically enables auto-merge for non-major Dependabot PRs. The PR will automatically merge once all 3 CI quality checks pass green.
 
 ---
 
