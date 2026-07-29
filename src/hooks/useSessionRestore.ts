@@ -7,7 +7,7 @@
 
 import { useEffect, useCallback, useRef } from 'react';
 import { ServiceType } from '../types';
-import { ProxyGitAdapter, CloudflareChallengeError } from '../services/proxyGitService';
+import { ProxyGitAdapter, CloudflareChallengeError, UpstreamAuthError } from '../services/proxyGitService';
 import { useAuthStore } from '../features/auth/store';
 
 export function useSessionRestore() {
@@ -17,6 +17,7 @@ export function useSessionRestore() {
     setGitService,
     setServiceType,
     setLoading,
+    setIsLoggingOut,
     setError,
     clearAuth,
   } = useAuthStore();
@@ -26,7 +27,14 @@ export function useSessionRestore() {
   // // @para-doc [#csa-cms-client-logout-post]
   // // @para-doc [#csa-cms-cfr-logout-resilience]
   const performSimpleLogout = useCallback(async () => {
-    clearAuth();
+    // Preserve React Zustand state during page unload to prevent session error flash
+    setIsLoggingOut(true);
+
+    // Timeout Watchdog fallback: force navigate after 1.5s if POST form submit unresponsively hangs
+    setTimeout(() => {
+      window.location.href = '/login?logout=true';
+    }, 1500);
+
     // Redirect browser to logout endpoint to clear all session cookies (local + sso)
     const getCookie = (name: string): string | undefined => {
       const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
@@ -58,7 +66,7 @@ export function useSessionRestore() {
       // Navigate to login with logout flag so the server clears the session cookie.
       window.location.href = '/login?logout=true';
     }
-  }, [clearAuth]);
+  }, [setIsLoggingOut]);
 
   // Listen for auth-error events (401 from API proxy)
   useEffect(() => {
@@ -99,6 +107,12 @@ export function useSessionRestore() {
       setServiceType(service);
     } catch (e: any) {
       console.error(`Session init failed (attempt ${attempt}):`, e);
+
+      if (e instanceof UpstreamAuthError || e?.isUpstreamAuth) {
+        console.warn(`Upstream Auth failure (${e.code}): redirecting to login...`);
+        window.location.href = `/login?logout=true&error=${encodeURIComponent(e.code || 'GITHUB_TOKEN_EXPIRED')}`;
+        return;
+      }
 
       if (e instanceof CloudflareChallengeError || e?.isCloudflareChallenge) {
         // // @para-doc [#csa-cms-cfr-retry-backoff]

@@ -15,7 +15,7 @@ import { ExclamationTriangleIcon } from './icons/ExclamationTriangleIcon';
 import { SpinnerIcon } from './icons/SpinnerIcon';
 
 const App: React.FC = () => {
-  const { user, repo, gitService, serviceType, isLoading, error } = useAuthStore();
+  const { user, repo, gitService, serviceType, isLoading, isLoggingOut, error } = useAuthStore();
   const { performSimpleLogout, retryInit } = useSessionRestore();
   const [isLogoutConfirmVisible, setIsLogoutConfirmVisible] = useState(false);
   const { t } = useI18n();
@@ -30,6 +30,15 @@ const App: React.FC = () => {
     document.body.className = 'bg-gray-100 font-sans text-gray-800 antialiased';
     return () => { document.body.className = ''; }
   }, []);
+
+  if (isLoggingOut) {
+    return (
+      <div className="flex flex-col justify-center items-center min-h-screen bg-gray-50/80 backdrop-blur-sm">
+        <SpinnerIcon className="animate-spin h-8 w-8 text-notion-muted mb-3" />
+        <p className="text-sm font-medium text-notion-text">Đang đăng xuất...</p>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -69,6 +78,16 @@ const App: React.FC = () => {
             >
               {t('app.error.retry')}
             </button>
+            {isCloudflare && (
+              <a
+                href="/api/proxy/git"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex justify-center items-center rounded-md border border-amber-300 bg-amber-50 px-4 py-2 text-xs font-medium text-amber-800 hover:bg-amber-100 transition-colors shadow-sm"
+              >
+                Xác thực Cloudflare ↗
+              </a>
+            )}
             <button
               type="button"
               onClick={() => performSimpleLogout()}

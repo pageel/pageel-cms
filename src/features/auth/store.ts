@@ -14,6 +14,7 @@ interface AuthState {
   gitService: IGitService | null;
   serviceType: ServiceType | null;
   isLoading: boolean;
+  isLoggingOut: boolean;
   error: string | null;
 }
 
@@ -23,6 +24,7 @@ interface AuthActions {
   setGitService: (service: IGitService | null) => void;
   setServiceType: (type: ServiceType | null) => void;
   setLoading: (loading: boolean) => void;
+  setIsLoggingOut: (isLoggingOut: boolean) => void;
   setError: (error: string | null) => void;
   
   // Check if user is authenticated
@@ -41,6 +43,7 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
   gitService: null,
   serviceType: null,
   isLoading: true,
+  isLoggingOut: false,
   error: null,
 
   // Actions
@@ -49,6 +52,7 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
   setGitService: (service) => set({ gitService: service }),
   setServiceType: (type) => set({ serviceType: type }),
   setLoading: (loading) => set({ isLoading: loading }),
+  setIsLoggingOut: (isLoggingOut) => set({ isLoggingOut }),
   setError: (error) => set({ error }),
 
   isAuthenticated: () => {
@@ -63,6 +67,7 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
       repo: null,
       gitService: null,
       serviceType: null,
+      isLoggingOut: false,
       error: null,
     });
   },
