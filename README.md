@@ -194,6 +194,7 @@ See [docs/deployment.md](docs/deployment.md) for VPS, Docker, and Vercel deploym
 | :------- | :---------- |
 | [Setup & Auth Modes](docs/setup.md) | Installation guide with detailed 3-mode configuration (Server, Connect, Open) |
 | [Deployment](docs/deployment.md) | VPS, Docker, Vercel deploy guides, env vars reference |
+| [CI/CD Pipeline Architecture](docs/cicd-pipeline.md) | Multi-job Quality Gate, Dependabot & CD release pipeline |
 | [Security Assessment](docs/security-assessment.md) | Auth, session, proxy security review |
 | [Plugin Development](packages/plugin-types/) | TypeScript interfaces for building custom plugins |
 
