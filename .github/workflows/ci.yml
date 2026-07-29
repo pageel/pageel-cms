@@ -28,6 +28,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build internal packages
+        run: npm run build:packages
+
+      - name: Sync Astro types
+        run: npx astro sync
+
       - name: Run TypeScript Check
         run: npx tsc --noEmit
 
@@ -51,6 +57,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build internal packages
+        run: npm run build:packages
+
+      - name: Sync Astro types
+        run: npx astro sync
+
       - name: Run Vitest Suite
         run: npx vitest run
 
@@ -70,6 +82,12 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Build internal packages
+        run: npm run build:packages
+
+      - name: Sync Astro types
+        run: npx astro sync
 
       - name: Build Production Bundle
         run: npm run build
