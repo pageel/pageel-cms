@@ -35,7 +35,7 @@ const App: React.FC = () => {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen bg-gray-50/80 backdrop-blur-sm">
         <SpinnerIcon className="animate-spin h-8 w-8 text-notion-muted mb-3" />
-        <p className="text-sm font-medium text-notion-text">Đang đăng xuất...</p>
+        <p className="text-sm font-medium text-notion-text">{t('app.loggingOut')}</p>
       </div>
     );
   }

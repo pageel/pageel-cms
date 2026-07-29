@@ -3,6 +3,7 @@ export const translations = {
   en: {
     app: {
       logout: 'Log Out',
+      loggingOut: 'Logging out...',
       logoutConfirm: {
         title: 'Confirm Logout',
         description: 'Are you sure you want to log out? Your session will end and you will need to reconnect.',
@@ -567,6 +568,7 @@ export const translations = {
   vi: {
     app: {
       logout: 'Đăng Xuất',
+      loggingOut: 'Đang đăng xuất...',
       logoutConfirm: {
         title: 'Xác nhận Đăng xuất',
         description: 'Bạn có chắc chắn muốn đăng xuất? Phiên làm việc sẽ kết thúc và bạn cần kết nối lại.',
