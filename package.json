@@ -27,7 +27,7 @@
     "@types/react-dom": "^19.2.3",
     "astro": "^6.4.8",
     "dompurify": "^3.3.3",
-    "js-yaml": "^4.1.1",
+    "js-yaml": "^5.2.2",
     "jszip": "^3.10.1",
     "marked": "^17.0.5",
     "react": "^19.2.4",
