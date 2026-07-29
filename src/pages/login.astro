@@ -41,8 +41,13 @@ const envAuthConfigured = hasEnvAuth();
 
 // Resolve PAGEEL_WORKER_URL (Worker API) for SSO bridge redirect
 const workerUrl = (typeof process !== 'undefined' ? process.env?.PAGEEL_WORKER_URL : '') || import.meta.env.PAGEEL_WORKER_URL || (Astro.locals as any)?.runtime?.env?.PAGEEL_WORKER_URL || (typeof process !== 'undefined' ? process.env?.PAGEEL_APP_URL : '') || import.meta.env.PAGEEL_APP_URL || (Astro.locals as any)?.runtime?.env?.PAGEEL_APP_URL || '';
+// // @para-doc [#csa-cms-cfr-sso-force-reauth]
+const isTokenExpired = rawError === 'GITHUB_TOKEN_EXPIRED';
 const hasSso = !!workerUrl;
-const ssoRedirectUrl = hasSso ? getSsoRedirectUrl(workerUrl, Astro.url.origin) : '';
+const baseSsoUrl = hasSso ? getSsoRedirectUrl(workerUrl, Astro.url.origin) : '';
+const ssoSeparator = baseSsoUrl.includes('?') ? '&' : '?';
+const ssoRedirectParams = isTokenExpired ? `${ssoSeparator}force_reauth=true&prompt=consent` : '';
+const ssoRedirectUrl = baseSsoUrl ? `${baseSsoUrl}${ssoRedirectParams}` : '';
 ---
 
 <!DOCTYPE html>
