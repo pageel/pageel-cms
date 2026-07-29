@@ -4,9 +4,15 @@ updates:
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
+      interval: "monthly"
+    open-pull-requests-limit: 3
     target-branch: "main"
+    # Security focus: Only allow patch and minor security updates to prevent spam
+    allow:
+      - dependency-type: "direct"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     labels:
       - "dependencies"
       - "security"
