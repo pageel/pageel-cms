@@ -5,6 +5,15 @@ All notable changes to Pageel CMS will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.5] - 2026-07-29
+
+### Added
+
+- **Explicit Logout Return URL**: Updated `logout.ts` to append `?logout=true` to the worker `return_url` when `hasSso === true`, ensuring `login.astro` receives explicit notification when a logout occurs (`csa-cms-cfr-explicit-logout-url`).
+- **Re-Auth Dual Button UI**: Updated `login.astro` to render primary SSO button as **"Tái xác thực & Đăng nhập lại ↗"** with `?force_reauth=true&prompt=consent` when `isTokenExpired || isLogout` is true (`csa-cms-cfr-reauth-button-ui`).
+- **Full Logout Escape Hatch Link**: Added secondary escape hatch link **"Đăng xuất hoàn toàn & Đổi tài khoản khác"** to `login.astro` directing to `/api/auth/logout?logout=true`, enabling full session purge without entering the OAuth re-auth loop (`csa-cms-cfr-full-logout-escape-hatch`).
+- **Client Storage Cache Purge**: Updated `login.astro` client script and `useSessionRestore.ts` to execute `localStorage.clear()` & `sessionStorage.clear()` on error/logout mount (`csa-cms-cfr-client-cache-purge`).
+
 ## [2.5.4] - 2026-07-29
 
 ### Added
