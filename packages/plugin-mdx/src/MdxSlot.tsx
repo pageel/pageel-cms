@@ -85,28 +85,32 @@ const CustomImageButton = ({
   );
 };
 
+// @para-doc [#csa-safe-props-protection]
 // ── Editor Component ──
-export function MdxEditorSlot({
-  initialValue,
-  onChange,
-  gitService,
-  imageBaseUrl,
-  externalMarkdown,
-  externalMarkdownVersion,
-  editorRef,
-  readOnly = false,
-  onRequestImage,
-}: EditorProps) {
+export function MdxEditorSlot(props: EditorProps = {} as EditorProps) {
+  const {
+    initialValue = '',
+    onChange,
+    gitService,
+    imageBaseUrl,
+    externalMarkdown,
+    externalMarkdownVersion,
+    editorRef,
+    readOnly = false,
+    onRequestImage,
+  } = props || {};
+
   const internalRef = useRef<MDXEditorMethods>(null);
   const activeRef = editorRef || internalRef;
-  const [initialMarkdown] = useState(initialValue);
+  const [initialMarkdown] = useState(initialValue || '');
 
-  // B1: Debounce onChange to 300ms
-  const debouncedOnChange = useDebouncedCallback(onChange, 300);
+  const safeOnChange = onChange || (() => {});
+  const debouncedOnChange = useDebouncedCallback(safeOnChange, 300);
 
-  // Image upload handler via restricted EditorGitService
+  // Image upload handler via restricted EditorGitService with safe fallback
   const imageUploadHandler: ImageUploadHandler = useCallback(
     async (image: File) => {
+      if (!gitService || typeof gitService.uploadImage !== 'function') return '';
       const url = await gitService.uploadImage(image);
       return url;
     },

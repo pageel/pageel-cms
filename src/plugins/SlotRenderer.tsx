@@ -113,6 +113,7 @@ interface SlotRendererProps {
 }
 
 // @para-doc [#csa-slot-renderer-bypass]
+// @para-doc [#csa-plugins-view-exclusive-toggle-boundary]
 export function SlotRenderer({
   slot,
   pluginName,
@@ -123,6 +124,7 @@ export function SlotRenderer({
   const config = usePluginConfig();
   const isEnabled = config?.plugins?.enabled;
   const PluginComponent = resolveSlotComponent<Record<string, unknown>>(pluginName, slot);
+  const safeProps = props || {};
 
   if (isEnabled === false || !PluginComponent) {
     return <>{fallback}</>;
@@ -131,7 +133,7 @@ export function SlotRenderer({
   return (
     <PluginErrorBoundary fallback={fallback}>
       <Suspense fallback={loadingIndicator || <DefaultLoadingIndicator />}>
-        <PluginComponent {...props} />
+        <PluginComponent {...safeProps} />
       </Suspense>
     </PluginErrorBoundary>
   );
