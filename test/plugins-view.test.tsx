@@ -61,11 +61,42 @@ describe('PluginsView Integration Unit Tests', () => {
     const secondPluginCard = gridDiv.props.children[1]; // EasyMDE
 
     // MDX should be marked Active
-    const mdxBadge = firstPluginCard.props.children[0].props.children[0].props.children[1];
-    expect(mdxBadge.props.children).toBe('Active');
+    const mdxBadgeContainer = firstPluginCard.props.children[0].props.children[0].props.children[1];
+    expect(mdxBadgeContainer.props.children[1].props.children).toBe('Active');
 
     // EasyMDE should be marked Inactive
-    const easymdeBadge = secondPluginCard.props.children[0].props.children[0].props.children[1];
-    expect(easymdeBadge.props.children).toBe('Inactive');
+    const easymdeBadgeContainer = secondPluginCard.props.children[0].props.children[0].props.children[1];
+    expect(easymdeBadgeContainer.props.children[1].props.children).toBe('Inactive');
+  });
+
+  it('should render Dev Badge and disable Activate button for dev status plugin in prod mode', () => {
+    (globalThis as any).__TEST_PROD_MODE__ = true;
+
+    const result: any = PluginsView({
+
+
+      gitService: mockGitService,
+      repo: mockRepo,
+      pluginConfig: mockPluginConfig,
+      setPluginConfig: mockSetPluginConfig
+    });
+
+
+    const gridDiv = result.props.children[2];
+    const easymdeCard = gridDiv.props.children[1]; // EasyMDE (status: 'dev')
+
+    // 1. Check Dev Badge
+    const headerRow = easymdeCard.props.children[0].props.children[0];
+    const badgeContainer = headerRow.props.children[1];
+    const devBadge = badgeContainer.props.children[0];
+    expect(devBadge.props.children).toContain('Dev Mode');
+
+    // 2. Check disabled button
+    const actionRow = easymdeCard.props.children[1];
+    const activateButton = actionRow.props.children[1];
+    expect(activateButton.props.disabled).toBe(true);
+    expect(activateButton.props.title).toContain('CMS_DEBUG=true');
   });
 });
+
+
