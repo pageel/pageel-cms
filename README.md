@@ -9,7 +9,7 @@
   <p>Manage your content where your code lives. No database required.</p>
 
   [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-  [![Version](https://img.shields.io/badge/version-v2.5.0-blue.svg)](CHANGELOG.md)
+  [![Version](https://img.shields.io/badge/version-v2.5.8-blue.svg)](CHANGELOG.md)
   ![Status](https://img.shields.io/badge/status-stable-brightgreen.svg)
   [![GitHub](https://img.shields.io/badge/GitHub-supported-181717?logo=github&logoColor=white)](https://github.com)
   [![Astro](https://img.shields.io/badge/Astro-6-BC52EE?logo=astro&logoColor=white)](https://astro.build)
@@ -114,13 +114,17 @@ Add to your `.pageelrc.json`:
 }
 ```
 
-### 3-Tab Editing
+### Editor Tabs
+
+When a WYSIWYG plugin is active (e.g., `@pageel/plugin-mdx`):
 
 | Tab | Description |
 | :--- | :--- |
-| ✏️ **Edit** | WYSIWYG editor (MDXEditor plugin) or fallback textarea |
-| `</>` **Markdown** | Raw markdown editor — always available |
+| ✏️ **Edit** | WYSIWYG visual editor (MDXEditor plugin) |
+| `</>` **Source** | Source Editor — raw markdown with Notion-style toolbar |
 | 👁 **Preview** | Rendered HTML preview |
+
+When no plugin is active, the UI simplifies to **2 tabs**: `Source` + `Preview`.
 
 ---
 

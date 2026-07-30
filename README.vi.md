@@ -9,7 +9,7 @@
   <p>Quản lý nội dung ngay nơi code của bạn. Không cần database.</p>
 
   [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-  [![Version](https://img.shields.io/badge/version-v2.5.0-blue.svg)](CHANGELOG.md)
+  [![Version](https://img.shields.io/badge/version-v2.5.8-blue.svg)](CHANGELOG.md)
   ![Status](https://img.shields.io/badge/status-stable-brightgreen.svg)
   [![GitHub](https://img.shields.io/badge/GitHub-supported-181717?logo=github&logoColor=white)](https://github.com)
   [![Astro](https://img.shields.io/badge/Astro-6-BC52EE?logo=astro&logoColor=white)](https://astro.build)
@@ -114,13 +114,17 @@ Thêm vào file `.pageelrc.json`:
 }
 ```
 
-### Hệ thống 3 Tab
+### Tab Editor
+
+Khi plugin WYSIWYG đang hoạt động (ví dụ: `@pageel/plugin-mdx`):
 
 | Tab | Mô tả |
 | :--- | :--- |
-| ✏️ **Edit** | WYSIWYG editor (plugin MDXEditor) hoặc textarea mặc định |
-| `</>` **Markdown** | Soạn markdown thô — luôn có sẵn |
+| ✏️ **Edit** | WYSIWYG visual editor (plugin MDXEditor) |
+| `</>` **Source** | Source Editor — soạn markdown thô với thanh công cụ phong cách Notion |
 | 👁 **Preview** | Xem trước HTML đã render |
+
+Khi không có plugin hoạt động, giao diện rút gọn còn **2 tab**: `Source` + `Preview`.
 
 ---
 
