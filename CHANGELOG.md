@@ -5,7 +5,17 @@ All notable changes to Pageel CMS will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.6] - 2026-07-30
+
+### Added
+
+- **Plugin Status Metadata**: Added `status?: PluginStatus` ('stable' | 'beta' | 'experimental' | 'dev') to `PluginMetadata` in `registry.ts` (`#csa-plugin-status-metadata`).
+- **Runtime Loader Fallback Engine**: Updated `resolveSlotComponent` in `registry.ts` to fall back to `@pageel/plugin-mdx` singleton component when target loader component returns empty or crashes (`#csa-loader-fallback-guard`).
+- **UI Action Guard & Dev Badge**: Rendered 🚧 `Dev Mode` badge and disabled Activate button in `PluginsView.tsx` for dev plugins on Production unless `CMS_DEBUG=true` (`#csa-plugins-ui-dev-guard`).
+- **API Server Dev Guard**: Rejection of dev status plugin activation attempts in `/api/settings/plugins.ts` with `HTTP 400 Bad Request` when `isDevMode` is false (`#csa-plugins-api-dev-guard`).
+
 ## [2.5.5] - 2026-07-29
+
 
 ### Added
 
