@@ -5,6 +5,14 @@ All notable changes to Pageel CMS will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.7] - 2026-07-30
+
+### Fixed
+
+- **Zero-Plugin Native Core Fallback**: Replaced dynamic import fallback in `registry.ts` with static `NativePlainEditor` (`<textarea>`) component (`#csa-zero-plugin-native-fallback`).
+- **Safe Props Protection**: Hardened `MdxEditorSlot` with default parameter `props = {} as EditorProps`, fallback `initialValue || ''`, and safe dummy callbacks (`#csa-safe-props-protection`).
+- **Defensive Slot Renderer**: Added `safeProps = props || {}` fallback in `SlotRenderer.tsx` (`#csa-plugins-view-exclusive-toggle-boundary`).
+
 ## [2.5.6] - 2026-07-30
 
 ### Added
