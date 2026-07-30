@@ -1,7 +1,7 @@
 {
   "name": "pageel-cms",
   "type": "module",
-  "version": "2.5.6",
+  "version": "2.5.7",
 
   "bin": {
     "pageel-cms": "./bin/cli.js"
@@ -16,6 +16,7 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
+    "test:run": "vitest run",
     "astro": "astro",
     "build:packages": "npm run build -w packages/plugin-types && npm run build -w packages/plugin-mdx && npm run build -w packages/cms-bridge",
     "version:check": "node scripts/check-version-sync.mjs",
