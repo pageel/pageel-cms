@@ -12,6 +12,8 @@ import type { ComponentType } from 'react';
 import { lazy } from 'react';
 import { NativePlainEditor } from '../components/editors/NativePlainEditor';
 
+import mdxPlugin from '@pageel/plugin-mdx';
+
 // @para-doc [#csa-plugin-status-metadata]
 export type PluginStatus = 'stable' | 'beta' | 'experimental' | 'dev';
 
@@ -51,7 +53,7 @@ export const SUPPORTED_PLUGINS: PluginMetadata[] = [
 // Mỗi supported plugin = 1 static import entry.
 // Thêm entry khi CMS bundle hỗ trợ thêm plugin mới.
 const PLUGIN_LOADERS: Record<string, () => Promise<{ default: PageelPlugin }>> = {
-  '@pageel/plugin-mdx': () => import('@pageel/plugin-mdx'),
+  '@pageel/plugin-mdx': () => Promise.resolve({ default: mdxPlugin }),
   '@pageel/plugin-easymde': () => Promise.resolve({
     default: {
       id: '@pageel/plugin-easymde',
@@ -71,8 +73,21 @@ export function isValidPluginName(name: string): boolean {
   return VALID_PLUGIN_PATTERN.test(name);
 }
 
+// Track plugins that have fallen back at runtime
+const fallbackPlugins = new Set<string>();
+
+export function isPluginFallback(pluginName: string | undefined): boolean {
+  if (!pluginName) return true;
+  if (fallbackPlugins.has(pluginName)) return true;
+  if (!isValidPluginName(pluginName)) return true;
+  const loader = PLUGIN_LOADERS[pluginName];
+  const meta = SUPPORTED_PLUGINS.find(p => p.id === pluginName);
+  if (!loader || meta?.status === 'dev') return true;
+  return false;
+}
+
 // @para-doc [#csa-zero-plugin-native-fallback]
-// ── Native Core Fallback Component Singleton Reference ──
+// ── Source Editor Fallback Component Singleton Reference ──
 const DEFAULT_MDX_SLOT: ComponentType<any> = NativePlainEditor as ComponentType<any>;
 (DEFAULT_MDX_SLOT as any).__isMdxFallback = true;
 
@@ -89,13 +104,15 @@ export function resolveSlotComponent<T>(
 
   if (!isValidPluginName(pluginName)) {
     console.warn(`[pageel] Invalid plugin name: "${pluginName}"`);
+    fallbackPlugins.add(pluginName);
     return DEFAULT_MDX_SLOT as ComponentType<T>;
   }
 
   const loader = PLUGIN_LOADERS[pluginName];
   const meta = SUPPORTED_PLUGINS.find(p => p.id === pluginName);
   if (!loader || meta?.status === 'dev') {
-    console.warn(`[pageel] Plugin "${pluginName}" is in dev status or missing loader. Falling back to Native Core Editor.`);
+    console.warn(`[pageel] Plugin "${pluginName}" is in dev status or missing loader. Falling back to Source Editor.`);
+    fallbackPlugins.add(pluginName);
     return DEFAULT_MDX_SLOT as ComponentType<T>;
   }
 
@@ -108,14 +125,15 @@ export function resolveSlotComponent<T>(
     try {
       const mod = await loader();
       const component = mod.default.slots[slot];
-      const isNullMock = typeof component === 'function' && !(component.prototype && (component.prototype as any).isReactComponent) && (component as Function)() === null;
-      if (!component || isNullMock) {
-        console.warn(`[pageel] Plugin "${pluginName}" slot "${String(slot)}" returned empty/null component. Falling back to Native Core Editor.`);
+      if (!component) {
+        fallbackPlugins.add(pluginName);
+        console.warn(`[pageel] Plugin "${pluginName}" slot "${String(slot)}" returned empty/null component. Falling back to Source Editor.`);
         return { default: DEFAULT_MDX_SLOT as ComponentType<any> };
       }
       return { default: component as ComponentType<any> };
     } catch (err: any) {
-      console.warn(`[pageel] Plugin "${pluginName}" failed to load: ${err.message}. Falling back to Native Core Editor.`);
+      fallbackPlugins.add(pluginName);
+      console.warn(`[pageel] Plugin "${pluginName}" failed to load: ${err.message}. Falling back to Source Editor.`);
       return { default: DEFAULT_MDX_SLOT as ComponentType<any> };
     }
   });

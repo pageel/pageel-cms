@@ -5,6 +5,14 @@ All notable changes to Pageel CMS will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.8] - 2026-07-30
+
+### Fixed
+
+- **PostList Sort Option Key Deduplication**: Filtered out `'date'` from `extraFields` array in `PostList.tsx:328` to prevent duplicate `date-asc` and `date-desc` React option keys (`#csa-postlist-sort-dedupe`).
+- **Native Core Fallback Standardization**: Replaced raw HTML `<textarea>` fallback in `PostDetailView.tsx` prop `fallback` with Notion-style `NativePlainEditor` (`#csa-native-fallback-settings-bypass`).
+- **Clean 2-Tab Architecture**: Consolidated tab system in `PostDetailView.tsx` to 2 Tabs ("Markdown Editor" using `NativePlainEditor` + "Preview") when no WYSIWYG plugin is active, eliminating the redundant "Source" tab (`#csa-tab-architecture-consolidation`).
+
 ## [2.5.7] - 2026-07-30
 
 ### Fixed

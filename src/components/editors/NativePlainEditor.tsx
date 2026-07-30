@@ -1,5 +1,5 @@
 // @para-doc [#csa-zero-plugin-native-fallback]
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 
 export interface NativePlainEditorProps {
   initialValue?: string;
@@ -20,6 +20,12 @@ export function NativePlainEditor({
 }: NativePlainEditorProps) {
   const [internalValue, setInternalValue] = useState(initialValue);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (controlledValue === undefined) {
+      setInternalValue(initialValue);
+    }
+  }, [initialValue, controlledValue]);
 
   const currentValue = controlledValue !== undefined ? controlledValue : internalValue;
 
@@ -63,17 +69,17 @@ export function NativePlainEditor({
   );
 
   return (
-    <div className={`w-full border border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-900 ${className}`}>
-      {/* Native Toolbar */}
-      <div className="flex items-center gap-1 p-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 text-xs font-mono select-none">
-        <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded text-[10px] font-semibold uppercase tracking-wider">
-          Native Core Editor
+    <div className={`w-full border border-notion-border rounded-lg overflow-hidden bg-white shadow-sm ${className}`}>
+      {/* Source Editor Toolbar */}
+      <div className="flex items-center gap-1.5 p-2 bg-notion-sidebar/40 border-b border-notion-border text-xs font-mono select-none">
+        <span className="px-2 py-0.5 bg-notion-bg/80 text-notion-muted rounded border border-notion-border text-[10px] font-semibold tracking-wide">
+          Source Editor
         </span>
-        <div className="h-4 w-px bg-gray-300 dark:bg-gray-700 mx-1" />
+        <div className="h-4 w-px bg-notion-border mx-1" />
         <button
           type="button"
           onClick={() => insertSnippet('**', '**')}
-          className="px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-700 dark:text-gray-300 font-bold"
+          className="px-2 py-1 hover:bg-notion-sidebar rounded text-notion-text font-bold transition-colors"
           title="Bold"
         >
           B
@@ -81,7 +87,7 @@ export function NativePlainEditor({
         <button
           type="button"
           onClick={() => insertSnippet('*', '*')}
-          className="px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-700 dark:text-gray-300 italic"
+          className="px-2 py-1 hover:bg-notion-sidebar rounded text-notion-text italic transition-colors"
           title="Italic"
         >
           I
@@ -90,7 +96,7 @@ export function NativePlainEditor({
         <button
           type="button"
           onClick={() => insertSnippet('### ')}
-          className="px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-700 dark:text-gray-300 font-bold"
+          className="px-2 py-1 hover:bg-notion-sidebar rounded text-notion-text font-bold transition-colors"
           title="Heading 3"
         >
           H3
@@ -98,7 +104,7 @@ export function NativePlainEditor({
         <button
           type="button"
           onClick={() => insertSnippet('`', '`')}
-          className="px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-700 dark:text-gray-300"
+          className="px-2 py-1 hover:bg-notion-sidebar rounded text-notion-text transition-colors"
           title="Inline Code"
         >
           {`</>`}
@@ -106,7 +112,7 @@ export function NativePlainEditor({
         <button
           type="button"
           onClick={() => insertSnippet('[', '](https://example.com)')}
-          className="px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-700 dark:text-gray-300"
+          className="px-2 py-1 hover:bg-notion-sidebar rounded text-notion-text transition-colors"
           title="Link"
         >
           Link
@@ -114,21 +120,22 @@ export function NativePlainEditor({
         <button
           type="button"
           onClick={() => insertSnippet('- ')}
-          className="px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-700 dark:text-gray-300"
+          className="px-2 py-1 hover:bg-notion-sidebar rounded text-notion-text transition-colors"
           title="List Item"
         >
           List
         </button>
       </div>
 
-      {/* Editor Textarea */}
+      {/* Editor Textarea with Notion Aesthetics */}
       <textarea
         ref={textareaRef}
         value={currentValue}
         onChange={handleTextChange}
         placeholder={placeholder}
         readOnly={readOnly}
-        className="w-full min-h-[350px] p-4 font-mono text-sm bg-transparent text-gray-900 dark:text-gray-100 focus:outline-none resize-y"
+        spellCheck={false}
+        className="w-full min-h-[450px] p-5 font-mono text-xs bg-white text-notion-text leading-relaxed focus:outline-none resize-y"
       />
     </div>
   );
