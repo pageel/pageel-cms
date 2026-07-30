@@ -17,8 +17,11 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "build:packages": "npm run build -w packages/plugin-types && npm run build -w packages/plugin-mdx && npm run build -w packages/cms-bridge"
+    "build:packages": "npm run build -w packages/plugin-types && npm run build -w packages/plugin-mdx && npm run build -w packages/cms-bridge",
+    "version:check": "node scripts/check-version-sync.mjs",
+    "version:sync": "node scripts/sync-package-versions.mjs"
   },
+
   "dependencies": {
     "@astrojs/check": "^0.9.9",
     "@astrojs/react": "^5.0.7",
