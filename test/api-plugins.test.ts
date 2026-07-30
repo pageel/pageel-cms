@@ -106,4 +106,42 @@ describe('Plugins Management API TDD Tests', () => {
     const newContent = JSON.parse(mockUpdateFileContent.mock.calls[0][2]);
     expect(newContent.plugins.settings).toEqual({ fontSize: 14 });
   });
+
+  it('should reject dev status plugin activation in prod mode with HTTP 400 Bad Request', async () => {
+
+    // Set node env to production for this test
+    const prevEnv = process.env.NODE_ENV;
+    const prevDebug = process.env.CMS_DEBUG;
+    try {
+      process.env.NODE_ENV = 'production';
+      delete process.env.CMS_DEBUG;
+
+      const context = createContext({ editor: '@pageel/plugin-easymde' });
+      const response = await handlePluginsAPI(context);
+
+      expect(response.status).toBe(400);
+      const json = await response.json();
+      expect(json.error).toBe('PLUGINS_DEV_MODE_RESTRICTED');
+    } finally {
+      process.env.NODE_ENV = prevEnv;
+      if (prevDebug) process.env.CMS_DEBUG = prevDebug;
+    }
+  });
+
+  it('should allow dev status plugin activation in prod mode when CMS_DEBUG=true', async () => {
+    const prevEnv = process.env.NODE_ENV;
+    try {
+      process.env.NODE_ENV = 'production';
+      process.env.CMS_DEBUG = 'true';
+
+      const context = createContext({ editor: '@pageel/plugin-easymde' });
+      const response = await handlePluginsAPI(context);
+
+      expect(response.status).toBe(200);
+    } finally {
+      process.env.NODE_ENV = prevEnv;
+      delete process.env.CMS_DEBUG;
+    }
+  });
 });
+

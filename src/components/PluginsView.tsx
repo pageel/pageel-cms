@@ -84,9 +84,22 @@ export const PluginsView: React.FC<PluginsViewProps> = ({
 
   // @para-doc [#csa-plugins-view-exclusive-toggle]
   // @para-doc [#csa-plugins-conflict-resolution]
+  // @para-doc [#csa-plugins-ui-dev-guard]
   const handleToggleActivation = async (pluginId: string, currentlyActive: boolean) => {
+    const targetPlugin = SUPPORTED_PLUGINS.find(p => p.id === pluginId);
+    const isTestProd = (typeof globalThis !== 'undefined' && (globalThis as any).__TEST_PROD_MODE__);
+    const isDevMode = (import.meta.env.DEV || (typeof window !== 'undefined' && (window as any).__CMS_DEBUG__)) && !isTestProd;
+    const isDevRestricted = targetPlugin?.status === 'dev' && !isDevMode;
+    if (isDevRestricted && !currentlyActive) {
+      console.warn(`[pageel] Activation of dev plugin "${pluginId}" blocked in production environment.`);
+      return;
+    }
+
+
+
     const prevEditor = activeEditor;
     const nextEditor = currentlyActive ? null : pluginId;
+
 
     // 1. Optimistic Update
     setPluginConfig({
@@ -259,13 +272,20 @@ export const PluginsView: React.FC<PluginsViewProps> = ({
                       <span className="text-xs text-notion-muted font-mono">v{plugin.version} • By {plugin.author}</span>
                     </div>
                   </div>
-                  <span
-                    className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      isActive ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-gray-100 text-gray-600 border border-gray-200'
-                    }`}
-                  >
-                    {isActive ? 'Active' : 'Inactive'}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {plugin.status === 'dev' && (
+                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200 shrink-0">
+                        🚧 Dev Mode
+                      </span>
+                    )}
+                    <span
+                      className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        isActive ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-gray-100 text-gray-600 border border-gray-200'
+                      }`}
+                    >
+                      {isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
                 </div>
                 <p className="mt-4 text-sm text-notion-muted leading-relaxed">
                   {plugin.description}
@@ -280,20 +300,33 @@ export const PluginsView: React.FC<PluginsViewProps> = ({
                 >
                   Configure
                 </button>
-                <button
-                  type="button"
-                  disabled={isProcessing}
-                  onClick={() => handleToggleActivation(plugin.id, isActive)}
-                  className={`px-4 py-1.5 text-xs font-medium rounded-sm shadow-sm transition-colors flex items-center gap-1.5 ${
-                    isActive
-                      ? 'bg-red-50 hover:bg-red-100 text-red-700 border border-red-200'
-                      : 'bg-notion-blue hover:bg-blue-600 text-white'
-                  }`}
-                >
-                  {isProcessing && <SpinnerIcon className="w-3.5 h-3.5 animate-spin" />}
-                  {isActive ? 'Deactivate' : 'Activate'}
-                </button>
+                {(() => {
+                  const isTestProd = (typeof globalThis !== 'undefined' && (globalThis as any).__TEST_PROD_MODE__);
+                  const isDevMode = (import.meta.env.DEV || (typeof window !== 'undefined' && (window as any).__CMS_DEBUG__)) && !isTestProd;
+                  const isDevRestricted = plugin.status === 'dev' && !isDevMode;
+                  return (
+                    <button
+
+                      type="button"
+                      disabled={isProcessing || (isDevRestricted && !isActive)}
+                      title={isDevRestricted && !isActive ? "Plugin đang ở chế độ Dev Mode, chỉ cho phép kích hoạt khi CMS_DEBUG=true" : undefined}
+                      onClick={() => handleToggleActivation(plugin.id, isActive)}
+                      className={`px-4 py-1.5 text-xs font-medium rounded-sm shadow-sm transition-colors flex items-center gap-1.5 ${
+                        isActive
+                          ? 'bg-red-50 hover:bg-red-100 text-red-700 border border-red-200'
+                          : isDevRestricted
+                          ? 'bg-gray-200 text-gray-400 cursor-not-allowed border border-gray-300'
+                          : 'bg-notion-blue hover:bg-blue-600 text-white'
+                      }`}
+                    >
+                      {isProcessing && <SpinnerIcon className="w-3.5 h-3.5 animate-spin" />}
+                      {isActive ? 'Deactivate' : 'Activate'}
+                    </button>
+                  );
+                })()}
+
               </div>
+
             </div>
           );
         })}

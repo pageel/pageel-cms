@@ -1,9 +1,10 @@
 import type { APIRoute } from 'astro';
 import { verifySession, resolveGitCredentials, COOKIE_NAME } from '../../../lib/session';
 import { createGitConfig, getFileContent, updateFileContent, createFileFromString, getFileSha } from '../../../lib/git-client';
-import { isValidPluginName } from '../../../plugins/registry';
+import { isValidPluginName, SUPPORTED_PLUGINS } from '../../../plugins/registry';
 
 const PAGEELRC_PATH = '.pageelrc.json';
+
 
 function sanitizePayload(obj: any): any {
   if (obj === null || typeof obj !== 'object') {
@@ -66,6 +67,22 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     if (editor !== null && editor !== undefined && !isValidPluginName(editor)) {
       return new Response('Invalid editor plugin', { status: 400 });
     }
+
+    // @para-doc [#csa-plugins-api-dev-guard]
+    if (editor) {
+      const targetPlugin = SUPPORTED_PLUGINS.find(p => p.id === editor);
+      const isDevMode = process.env.NODE_ENV !== 'production' || process.env.CMS_DEBUG === 'true';
+      if (targetPlugin?.status === 'dev' && !isDevMode) {
+        return new Response(
+          JSON.stringify({
+            error: 'PLUGINS_DEV_MODE_RESTRICTED',
+            message: 'Plugin đang ở chế độ Dev Mode, chỉ cho phép kích hoạt khi CMS_DEBUG=true'
+          }),
+          { status: 400, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
 
     const creds = resolveGitCredentials(session);
     const config = createGitConfig(creds.token, creds.repo);
