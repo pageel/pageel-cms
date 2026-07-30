@@ -317,6 +317,7 @@ const PostList: React.FC<PostListProps> = ({
   };
 
   // WF-08: Build dynamic sort options from template
+  // @para-doc [#csa-postlist-sort-dedupe]
   const dynamicSortOptions = useMemo(() => {
     const baseOptions = [
       { value: 'date-desc', label: 'Date (Newest)' },
@@ -326,7 +327,7 @@ const PostList: React.FC<PostListProps> = ({
     ];
     if (activeTemplate?.fields) {
       const extraFields = activeTemplate.fields.filter(
-        f => !['title', 'image', 'cover', 'thumbnail', 'heroImage'].includes(f.name) &&
+        f => !['title', 'image', 'cover', 'thumbnail', 'heroImage', 'date'].includes(f.name) &&
              f.type !== 'object' && f.type !== 'array'
       );
       extraFields.forEach(f => {

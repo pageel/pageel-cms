@@ -20,8 +20,9 @@ import { CloseIcon } from './icons/CloseIcon';
 import { CodeIcon } from './icons/CodeIcon';
 import { EyeIcon } from './icons/EyeIcon';
 import PostImageSelectionModal from './PostImageSelectionModal';
-import { SlotRenderer, createEditorGitService, usePluginConfig } from '../plugins';
+import { SlotRenderer, createEditorGitService, usePluginConfig, isPluginFallback } from '../plugins';
 import type { EditorProps } from '@pageel/plugin-types';
+import { NativePlainEditor } from './editors/NativePlainEditor';
 
 
 
@@ -238,11 +239,11 @@ const PostDetailView: React.FC<PostDetailViewProps> = ({ post, onBack, onDelete,
   const [activeTab, setActiveTab] = useState<'edit' | 'code' | 'preview'>('edit');
   const { t, language } = useI18n();
   const pluginConfig = usePluginConfig();
-  const hasWysiwygPlugin = !!pluginConfig.plugins?.editor;
+  const hasWysiwygPlugin = !isPluginFallback(pluginConfig.plugins?.editor);
 
   useEffect(() => {
-      if (!hasWysiwygPlugin && activeTab === 'edit') {
-          setActiveTab('code');
+      if (!hasWysiwygPlugin && activeTab === 'code') {
+          setActiveTab('edit');
       }
   }, [hasWysiwygPlugin, activeTab]);
 
@@ -320,8 +321,7 @@ const PostDetailView: React.FC<PostDetailViewProps> = ({ post, onBack, onDelete,
   };
 
   const handleEditorChange = useCallback((markdown: string) => {
-      // Uncontrolled pattern: không cập nhật state `editableBody` trên mỗi keystroke
-      // Tránh việc re-render toàn bộ giao diện PostDetailView
+      setEditableBody(markdown);
       setIsDirty(true);
   }, []);
 
@@ -1098,30 +1098,44 @@ const PostDetailView: React.FC<PostDetailViewProps> = ({ post, onBack, onDelete,
 
                 <div className="border-t border-notion-border mb-6"></div>
 
-                {/* Tabs — 3 tab system (Phase 3 PB-08) */}
+                {/* Tabs — 2/3 tab system (#csa-tab-architecture-consolidation) */}
+                {/* @para-doc [#csa-tab-architecture-consolidation] */}
                 <div className="flex items-center gap-6 mb-6">
                     {hasWysiwygPlugin && (
                         <button
                             onClick={() => handleTabChange('edit')}
-                        className={`flex items-center gap-1.5 pb-1 text-sm font-medium transition-all ${
-                            activeTab === 'edit'
-                            ? 'text-notion-text border-b-2 border-notion-text'
-                            : 'text-notion-muted hover:text-notion-text border-b-2 border-transparent'
-                        }`}
-                    >
-                        <EditIcon className="w-4 h-4" /> Edit
-                    </button>
+                            className={`flex items-center gap-1.5 pb-1 text-sm font-medium transition-all ${
+                                activeTab === 'edit'
+                                ? 'text-notion-text border-b-2 border-notion-text'
+                                : 'text-notion-muted hover:text-notion-text border-b-2 border-transparent'
+                            }`}
+                        >
+                            <EditIcon className="w-4 h-4" /> Edit
+                        </button>
                     )}
-                    <button
-                        onClick={() => handleTabChange('code')}
-                        className={`flex items-center gap-1.5 pb-1 text-sm font-medium transition-all ${
-                            activeTab === 'code'
-                            ? 'text-notion-text border-b-2 border-notion-text'
-                            : 'text-notion-muted hover:text-notion-text border-b-2 border-transparent'
-                        }`}
-                    >
-                        {hasWysiwygPlugin ? (<span className="flex items-center gap-1.5"><CodeIcon className="w-4 h-4" /> Source</span>) : (<span className="flex items-center gap-1.5"><DocumentIcon className="w-4 h-4" /> Markdown</span>)}
-                    </button>
+                    {hasWysiwygPlugin ? (
+                        <button
+                            onClick={() => handleTabChange('code')}
+                            className={`flex items-center gap-1.5 pb-1 text-sm font-medium transition-all ${
+                                activeTab === 'code'
+                                ? 'text-notion-text border-b-2 border-notion-text'
+                                : 'text-notion-muted hover:text-notion-text border-b-2 border-transparent'
+                            }`}
+                        >
+                            <span className="flex items-center gap-1.5"><CodeIcon className="w-4 h-4" /> Source</span>
+                        </button>
+                    ) : (
+                        <button
+                            onClick={() => handleTabChange('edit')}
+                            className={`flex items-center gap-1.5 pb-1 text-sm font-medium transition-all ${
+                                activeTab === 'edit'
+                                ? 'text-notion-text border-b-2 border-notion-text'
+                                : 'text-notion-muted hover:text-notion-text border-b-2 border-transparent'
+                            }`}
+                        >
+                            <span className="flex items-center gap-1.5"><CodeIcon className="w-4 h-4" /> Source</span>
+                        </button>
+                    )}
                     <button
                         onClick={() => handleTabChange('preview')}
                         className={`flex items-center gap-1.5 pb-1 text-sm font-medium transition-all ${
@@ -1134,21 +1148,18 @@ const PostDetailView: React.FC<PostDetailViewProps> = ({ post, onBack, onDelete,
                     </button>
                 </div>
 
-                {/* Content Area — 3 tabs */}
+                {/* Content Area */}
                 <div className="pb-20">
                 {activeTab === 'edit' ? (
+                    // @para-doc [#csa-native-fallback-settings-bypass]
                     <SlotRenderer
                         slot="editor"
                         pluginName={pluginConfig.plugins?.editor}
                         fallback={
-                            <div className="rounded-lg border border-notion-border overflow-hidden bg-white shadow-inner">
-                                <textarea 
-                                    className="w-full h-[60vh] p-6 text-xs font-mono text-notion-text overflow-x-auto whitespace-pre-wrap leading-relaxed focus:outline-none resize-none bg-notion-sidebar/30"
-                                    value={editableBody}
-                                    onChange={handleBodyChange}
-                                    spellCheck={false}
-                                />
-                            </div>
+                            <NativePlainEditor
+                                value={editableBody}
+                                onChange={handleEditorChange}
+                            />
                         }
                         props={{
                             initialValue: editableBody,
@@ -1166,14 +1177,10 @@ const PostDetailView: React.FC<PostDetailViewProps> = ({ post, onBack, onDelete,
                         } satisfies EditorProps as Record<string, unknown>}
                     />
                 ) : activeTab === 'code' ? (
-                    <div className="rounded-lg border border-notion-border overflow-hidden bg-white shadow-inner">
-                        <textarea 
-                            className="w-full h-[60vh] p-6 text-xs font-mono text-notion-text overflow-x-auto whitespace-pre-wrap leading-relaxed focus:outline-none resize-none bg-notion-sidebar/30"
-                            value={editableBody}
-                            onChange={handleBodyChange}
-                            spellCheck={false}
-                        />
-                    </div>
+                    <NativePlainEditor
+                        value={editableBody}
+                        onChange={handleEditorChange}
+                    />
                 ) : (
                     <div
                         className="prose prose-slate prose-sm sm:prose-base max-w-none text-notion-text
