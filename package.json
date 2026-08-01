@@ -46,7 +46,7 @@
     "@tailwindcss/typography": "^0.5.19",
     "@types/dompurify": "^3.0.5",
     "@types/js-yaml": "^4.0.9",
-    "@types/node": "^25.5.0",
+    "@types/node": "^25.9.5",
     "@vitest/coverage-v8": "^4.1.9",
     "typescript": "^5.9.3",
     "vitest": "^4.1.9"
