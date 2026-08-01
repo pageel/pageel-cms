@@ -9,7 +9,7 @@
   <p>Quản lý nội dung ngay nơi code của bạn. Không cần database.</p>
 
   [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-  [![Version](https://img.shields.io/badge/version-v2.5.8-blue.svg)](CHANGELOG.md)
+  [![Version](https://img.shields.io/badge/version-v2.5.9-blue.svg)](CHANGELOG.md)
   ![Status](https://img.shields.io/badge/status-stable-brightgreen.svg)
   [![GitHub](https://img.shields.io/badge/GitHub-supported-181717?logo=github&logoColor=white)](https://github.com)
   [![Astro](https://img.shields.io/badge/Astro-6-BC52EE?logo=astro&logoColor=white)](https://astro.build)
