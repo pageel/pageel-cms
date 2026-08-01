@@ -222,6 +222,16 @@ describe('Edge Security Hardening TDD Tests', () => {
         expect(validateFileMagicBytes(validWebp, 'webp')).toBe(true);
       });
 
+      // @para-doc [#csa-cms-sec-test-avif-magic]
+      it('should validate valid AVIF magic bytes', () => {
+        const validAvif = new Uint8Array([
+          0x00, 0x00, 0x00, 0x1c,
+          0x66, 0x74, 0x79, 0x70, // ftyp
+          0x61, 0x76, 0x69, 0x66, // avif
+        ]);
+        expect(validateFileMagicBytes(validAvif, 'avif')).toBe(true);
+      });
+
       it('should reject spoofed extension files', () => {
         const fakePng = new Uint8Array([0x61, 0x62, 0x63, 0x64, 0x65]); // plain text "abcde"
         expect(validateFileMagicBytes(fakePng, 'png')).toBe(false);
