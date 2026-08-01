@@ -53,6 +53,22 @@ export function validateFileMagicBytes(buffer: Uint8Array, extension: string): b
     );
   }
   
+  // @para-doc [#csa-cms-sec-gap-avif]
+  if (ext === 'avif') {
+    // AVIF signature: ftyp at 4-7 (0x66 0x74 0x79 0x70) and avif/avis at 8-11
+    return (
+      buffer.length >= 12 &&
+      buffer[4] === 0x66 && // f
+      buffer[5] === 0x74 && // t
+      buffer[6] === 0x79 && // y
+      buffer[7] === 0x70 && // p
+      buffer[8] === 0x61 && // a
+      buffer[9] === 0x76 && // v
+      buffer[10] === 0x69 && // i
+      (buffer[11] === 0x66 || buffer[11] === 0x73) // f or s
+    );
+  }
+  
   return false;
 }
 

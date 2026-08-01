@@ -38,10 +38,26 @@ export class ProxyGitAdapter implements IGitService {
 
   // --- Private helpers ---
 
+  private getCsrfToken(): string {
+    if (typeof document !== 'undefined') {
+      const match = document.cookie.match(/(?:^|; )pageel_cms_csrf=([^;]*)/);
+      if (match && match[1]) return decodeURIComponent(match[1]);
+      const meta = document.querySelector('meta[name="cms-csrf-token"]');
+      if (meta) return meta.getAttribute('content') || '';
+    }
+    return '';
+  }
+
+  // @para-doc [#csa-cms-sec-gap-client-header-proxy]
+  // @para-doc [#csa-cms-sec-cors-credentials]
   private async proxyJsonCall(action: string, params: Record<string, any> = {}): Promise<any> {
+    const csrfToken = this.getCsrfToken();
     const response = await fetch(`${this.baseUrl}/api/proxy/git`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CMS-CSRF-Token': csrfToken,
+      },
       credentials: 'include', // Send session cookie
       body: JSON.stringify({ action, params }),
     });
@@ -133,8 +149,12 @@ export class ProxyGitAdapter implements IGitService {
     formData.append('commitMessage', commitMessage);
     if (sha) formData.append('sha', sha);
 
+    const csrfToken = this.getCsrfToken();
     const response = await fetch(`${this.baseUrl}/api/proxy/upload`, {
       method: 'POST',
+      headers: {
+        'X-CMS-CSRF-Token': csrfToken,
+      },
       credentials: 'include',
       body: formData,
       // Note: Don't set Content-Type header — browser sets multipart boundary

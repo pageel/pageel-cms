@@ -10,14 +10,18 @@
  */
 
 import { defineMiddleware } from 'astro:middleware';
-import { verifySession, resolveGitCredentials, COOKIE_NAME } from './lib/session';
+import { verifySession, resolveGitCredentials, COOKIE_NAME, verifyCsrfToken } from './lib/session';
 
 // @para-doc [#csa-cms-sec-middleware-guard-implementation]
+// @para-doc [#csa-cms-sec-ac-csrf-header]
+// @para-doc [#csa-cms-sec-ac-sso-compatibility]
+// @para-doc [#csa-cms-sec-gap-proxy-blob]
+// @para-doc [#csa-cms-sec-gap-settings-plugins]
 export const onRequest = defineMiddleware(async ({ request, cookies, redirect, url }, next) => {
   const path = url.pathname;
 
-  // Only guard /cms and /api/proxy/* routes
-  const isProtected = path === '/cms' || path.startsWith('/api/proxy/');
+  // Guard /cms, /api/proxy/* and /api/settings/* routes
+  const isProtected = path === '/cms' || path.startsWith('/api/proxy/') || path.startsWith('/api/settings/');
 
   if (!isProtected) {
     return next();
@@ -62,6 +66,23 @@ export const onRequest = defineMiddleware(async ({ request, cookies, redirect, u
     return redirect('/login?error=' + encodeURIComponent(
       'Your session is missing required credentials. Please login again.'
     ));
+  }
+
+  // Layer 4: CSRF Header Validation for mutation requests
+  const isMutation = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(request.method);
+  if (isMutation && (path.startsWith('/api/proxy/') || path.startsWith('/api/settings/'))) {
+    const csrfHeader = request.headers.get('X-CMS-CSRF-Token') || request.headers.get('x-cms-csrf-token');
+    const sessionId = token.split('.')[1] || '';
+    
+    // @para-doc [#csa-cms-sec-log-csrf]
+    const isValidCsrf = csrfHeader ? await verifyCsrfToken(csrfHeader, sessionId) : false;
+    if (!isValidCsrf) {
+      console.warn(`[middleware] CSRF check failed for path: ${path}, ip: ${request.headers.get('x-forwarded-for') || 'unknown'}`);
+      return new Response(JSON.stringify({ error: 'SEC_CSRF_INVALID', message: 'CSRF token missing or invalid' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
   }
 
   return next();

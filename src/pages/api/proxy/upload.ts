@@ -81,7 +81,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const extension = path.split('.').pop() || '';
 
     // Validate image magic bytes
-    const imageExtensions = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp']);
+    const imageExtensions = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'avif']);
     if (imageExtensions.has(extension.toLowerCase())) {
       const isValidMagic = validateFileMagicBytes(bytes, extension);
       if (!isValidMagic) {
@@ -91,6 +91,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         );
       }
     }
+
+    // @para-doc [#csa-cms-sec-log-upload]
+    console.info(`[upload] Validation passed for file: ${file.name || path}, size: ${file.size} bytes, type: ${file.type}, ext: .${extension}`);
 
     // Sanitize SVG content
     let finalBytes = bytes;

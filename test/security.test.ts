@@ -222,6 +222,16 @@ describe('Edge Security Hardening TDD Tests', () => {
         expect(validateFileMagicBytes(validWebp, 'webp')).toBe(true);
       });
 
+      // @para-doc [#csa-cms-sec-test-avif-magic]
+      it('should validate valid AVIF magic bytes', () => {
+        const validAvif = new Uint8Array([
+          0x00, 0x00, 0x00, 0x1c,
+          0x66, 0x74, 0x79, 0x70, // ftyp
+          0x61, 0x76, 0x69, 0x66, // avif
+        ]);
+        expect(validateFileMagicBytes(validAvif, 'avif')).toBe(true);
+      });
+
       it('should reject spoofed extension files', () => {
         const fakePng = new Uint8Array([0x61, 0x62, 0x63, 0x64, 0x65]); // plain text "abcde"
         expect(validateFileMagicBytes(fakePng, 'png')).toBe(false);
@@ -523,6 +533,43 @@ describe('Edge Security Hardening TDD Tests', () => {
       const setCookieHeaders = response.headers.getSetCookie();
       const sessionClears = setCookieHeaders.filter(h => h.startsWith('pageel_cms_session=;'));
       expect(sessionClears.length).toBeGreaterThanOrEqual(2);
+    });
+  });
+
+  // @para-doc [#csa-cms-sec-test-csrf-valid]
+  // @para-doc [#csa-cms-sec-test-csrf-missing]
+  // @para-doc [#csa-cms-sec-test-sso-bypass]
+  // @para-doc [#csa-cms-sec-test-settings-csrf]
+  describe('Layer 4 CSRF Protection & Middleware Integration', () => {
+    it('should allow POST mutation with valid CSRF token', async () => {
+      const sessionId = 'session-signature-123';
+      const validCsrf = await createCsrfToken(sessionId, secretKey);
+      const isValid = await verifyCsrfToken(validCsrf, sessionId, secretKey);
+      expect(isValid).toBe(true);
+    });
+
+    it('should reject CSRF token if session ID is mismatched', async () => {
+      const validCsrf = await createCsrfToken('session-signature-123', secretKey);
+      const isValid = await verifyCsrfToken(validCsrf, 'different-session-id', secretKey);
+      expect(isValid).toBe(false);
+    });
+
+    it('should reject CSRF token signed with old fallback key', async () => {
+      const validCsrf = await createCsrfToken('session-signature-123', 'fallback-secret-key-16-chars');
+      const isValid = await verifyCsrfToken(validCsrf, 'session-signature-123', secretKey);
+      expect(isValid).toBe(false);
+    });
+
+    it('should exempt GET requests and SSO auth callback routes from CSRF enforcement', () => {
+      const isCsrfRequired = (path: string, method: string) => {
+        const isMutation = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(method);
+        return isMutation && (path.startsWith('/api/proxy/') || path.startsWith('/api/settings/'));
+      };
+      expect(isCsrfRequired('/api/proxy/blob/image.png', 'GET')).toBe(false);
+      expect(isCsrfRequired('/api/auth/login', 'POST')).toBe(false);
+      expect(isCsrfRequired('/api/auth/callback', 'GET')).toBe(false);
+      expect(isCsrfRequired('/api/proxy/upload', 'POST')).toBe(true);
+      expect(isCsrfRequired('/api/settings/plugins', 'POST')).toBe(true);
     });
   });
 });

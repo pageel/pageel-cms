@@ -15,9 +15,15 @@ import { createSession, getSessionCookieOptions, hasEnvGitConfig, hasEnvAuth, cr
 import { createGitConfig, verifyTokenAccess } from '../../../lib/git-client';
 
 // @para-doc [#csa-cms-local-auth-validation]
-const loginSchema = z.object({
+// @para-doc [#csa-cms-sec-ac-login-zod-clean]
+const serverModeLoginSchema = z.object({
   username: z.string().min(1, 'Username and password are required.'),
   password: z.string().min(1, 'Username and password are required.'),
+  repo: z.string().optional(),
+  token: z.string().optional()
+});
+
+const openModeLoginSchema = z.object({
   repo: z.string().optional(),
   token: z.string().optional()
 });
@@ -40,13 +46,10 @@ export const POST: APIRoute = async ({ request, cookies, redirect, clientAddress
 
     const envHasAuth = hasEnvAuth();
 
-    // Validate inputs using Zod
-    const validation = loginSchema.safeParse({
-      username: envHasAuth ? username : 'anonymous',
-      password: envHasAuth ? password : 'dummy-password',
-      repo,
-      token: tokenInput
-    });
+    // Validate inputs using Zod without dummy password fallback
+    const currentSchema = envHasAuth ? serverModeLoginSchema : openModeLoginSchema;
+    const payloadToValidate = envHasAuth ? { username, password, repo, token: tokenInput } : { repo, token: tokenInput };
+    const validation = currentSchema.safeParse(payloadToValidate);
 
     if (!validation.success) {
       const errMsg = validation.error.issues[0]?.message || 'Invalid inputs.';
@@ -109,7 +112,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect, clientAddress
     // Set CSRF token cookie (Double Submit Cookie)
     const sessionId = sessionToken.split('.')[1] || 'session-signature';
     const env = (locals as any)?.runtime?.env || {};
-    const csrfSecret = env.CMS_SECRET || import.meta.env.CMS_SECRET || 'fallback-secret-key-16-chars';
+    const csrfSecret = env.CMS_SECRET || import.meta.env.CMS_SECRET;
     const csrfToken = await createCsrfToken(sessionId, csrfSecret);
 
     cookies.set('pageel_cms_csrf', csrfToken, {

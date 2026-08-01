@@ -5,6 +5,17 @@ All notable changes to Pageel CMS will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.9] - 2026-07-31
+
+### Security
+
+- **Constant-Time HMAC Comparison**: Replaced string equality operator in `hmacVerify()` with constant-time string comparison in `session.ts` to eliminate timing side-channel attacks (`#csa-cms-sec-csrf-header-spec`).
+- **CSRF Protection Layer**: Added Layer 4 CSRF token validation to `middleware.ts` guarding `/api/proxy/*` and `/api/settings/*` mutation routes (`POST`, `PUT`, `DELETE`, `PATCH`).
+- **Hardened Secret Resolution**: Removed hardcoded fallback secret key string in `login.ts` and `callback.ts`, enforcing centralized secret resolution via `getSecret()`.
+- **Client CSRF Header Injection**: Injected `X-CMS-CSRF-Token` headers and `credentials: 'include'` into `proxyGitService.ts`, `SettingsView.tsx`, and `PluginsView.tsx`.
+- **Clean Zod Auth Schemas**: Refactored `loginSchema` into mode-dependent schemas (`serverModeLoginSchema` & `openModeLoginSchema`) eliminating `'dummy-password'` fallback in Open Mode (`#csa-cms-sec-ac-login-zod-clean`).
+- **AVIF Magic Bytes Support**: Added `.avif` magic bytes pattern check (`ftypavif`/`ftypavis`) to `validateFileMagicBytes()` in `security-utils.ts` and `upload.ts` (`#csa-cms-sec-gap-avif`).
+
 ## [2.5.8] - 2026-07-30
 
 ### Fixed
