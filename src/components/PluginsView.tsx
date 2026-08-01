@@ -117,9 +117,17 @@ export const PluginsView: React.FC<PluginsViewProps> = ({
     const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     try {
+      const match = typeof document !== 'undefined' ? document.cookie.match(/(?:^|; )pageel_cms_csrf=([^;]*)/) : null;
+      const csrfToken = match && match[1] ? decodeURIComponent(match[1]) : (typeof document !== 'undefined' ? document.querySelector('meta[name="cms-csrf-token"]')?.getAttribute('content') || '' : '');
+      
+      // @para-doc [#csa-cms-sec-gap-client-header-plugins]
       const res = await fetch('/api/settings/plugins', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CMS-CSRF-Token': csrfToken,
+        },
+        credentials: 'include',
         body: JSON.stringify({ editor: nextEditor }),
         signal: controller.signal,
       });
@@ -177,9 +185,16 @@ export const PluginsView: React.FC<PluginsViewProps> = ({
     const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     try {
+      const match = typeof document !== 'undefined' ? document.cookie.match(/(?:^|; )pageel_cms_csrf=([^;]*)/) : null;
+      const csrfToken = match && match[1] ? decodeURIComponent(match[1]) : (typeof document !== 'undefined' ? document.querySelector('meta[name="cms-csrf-token"]')?.getAttribute('content') || '' : '');
+
       const res = await fetch('/api/settings/plugins', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CMS-CSRF-Token': csrfToken,
+        },
+        credentials: 'include',
         body: JSON.stringify({ editor: activeEditor, settings: tempSettings }),
         signal: controller.signal,
       });

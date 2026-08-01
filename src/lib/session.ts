@@ -47,9 +47,24 @@ async function hmacSign(payload: string, secret: string): Promise<string> {
   return btoa(String.fromCharCode(...new Uint8Array(signature)));
 }
 
+function constantTimeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) {
+    let result = 1;
+    for (let i = 0; i < a.length; i++) {
+      result |= a.charCodeAt(i) ^ (b.charCodeAt(i % b.length) || 0);
+    }
+    return false;
+  }
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return result === 0;
+}
+
 async function hmacVerify(payload: string, signature: string, secret: string): Promise<boolean> {
   const expected = await hmacSign(payload, secret);
-  return expected === signature;
+  return constantTimeCompare(expected, signature);
 }
 
 export interface SessionPayload {
@@ -121,6 +136,7 @@ export async function verifySession(token: string): Promise<SessionPayload | nul
 /**
  * Cookie options for set/clear
  */
+// @para-doc [#csa-cms-sec-cookie-attributes]
 export function getSessionCookieOptions(isProd: boolean) {
   return {
     name: COOKIE_NAME,
@@ -162,25 +178,27 @@ export function hasEnvAuth(): boolean {
   return !!(import.meta.env.CMS_USER);
 }
 
-// @para-doc [#csa-cms-sec-csrf]
-export async function createCsrfToken(sessionId: string, secret: string): Promise<string> {
+// @para-doc [#csa-cms-sec-csrf-header-spec]
+export async function createCsrfToken(sessionId: string, secret?: string): Promise<string> {
+  const sec = secret || getSecret();
   const expiry = Math.floor(Date.now() / 1000) + MAX_AGE;
   const payload = {
     sid: sessionId,
     exp: expiry
   };
   const payloadStr = btoa(JSON.stringify(payload));
-  const signature = await hmacSign(payloadStr, secret);
+  const signature = await hmacSign(`csrf:${payloadStr}`, sec);
   return `${payloadStr}.${signature}`;
 }
 
-export async function verifyCsrfToken(csrfToken: string, sessionId: string, secret: string): Promise<boolean> {
+export async function verifyCsrfToken(csrfToken: string, sessionId: string, secret?: string): Promise<boolean> {
   try {
+    const sec = secret || getSecret();
     const sanitizedToken = normalizeBase64(csrfToken);
     const [payloadStr, signature] = sanitizedToken.split('.');
     if (!payloadStr || !signature) return false;
     
-    const valid = await hmacVerify(payloadStr, signature, secret);
+    const valid = await hmacVerify(`csrf:${payloadStr}`, signature, sec);
     if (!valid) return false;
     
     const payload = JSON.parse(atob(payloadStr));

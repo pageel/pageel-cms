@@ -45,7 +45,7 @@ export const GET: APIRoute = async ({ request, cookies, redirect, locals }) => {
 
     // Set CSRF token cookie (Double Submit Cookie) after successful SSO handshake
     const sessionId = sessionToken.split('.')[1] || 'session-signature';
-    const csrfSecret = env.CMS_SECRET || import.meta.env.CMS_SECRET || 'fallback-secret-key-16-chars';
+    const csrfSecret = env.CMS_SECRET || import.meta.env.CMS_SECRET;
     const csrfToken = await createCsrfToken(sessionId, csrfSecret);
 
     cookies.set('pageel_cms_csrf', csrfToken, {

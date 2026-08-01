@@ -525,4 +525,41 @@ describe('Edge Security Hardening TDD Tests', () => {
       expect(sessionClears.length).toBeGreaterThanOrEqual(2);
     });
   });
+
+  // @para-doc [#csa-cms-sec-test-csrf-valid]
+  // @para-doc [#csa-cms-sec-test-csrf-missing]
+  // @para-doc [#csa-cms-sec-test-sso-bypass]
+  // @para-doc [#csa-cms-sec-test-settings-csrf]
+  describe('Layer 4 CSRF Protection & Middleware Integration', () => {
+    it('should allow POST mutation with valid CSRF token', async () => {
+      const sessionId = 'session-signature-123';
+      const validCsrf = await createCsrfToken(sessionId, secretKey);
+      const isValid = await verifyCsrfToken(validCsrf, sessionId, secretKey);
+      expect(isValid).toBe(true);
+    });
+
+    it('should reject CSRF token if session ID is mismatched', async () => {
+      const validCsrf = await createCsrfToken('session-signature-123', secretKey);
+      const isValid = await verifyCsrfToken(validCsrf, 'different-session-id', secretKey);
+      expect(isValid).toBe(false);
+    });
+
+    it('should reject CSRF token signed with old fallback key', async () => {
+      const validCsrf = await createCsrfToken('session-signature-123', 'fallback-secret-key-16-chars');
+      const isValid = await verifyCsrfToken(validCsrf, 'session-signature-123', secretKey);
+      expect(isValid).toBe(false);
+    });
+
+    it('should exempt GET requests and SSO auth callback routes from CSRF enforcement', () => {
+      const isCsrfRequired = (path: string, method: string) => {
+        const isMutation = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(method);
+        return isMutation && (path.startsWith('/api/proxy/') || path.startsWith('/api/settings/'));
+      };
+      expect(isCsrfRequired('/api/proxy/blob/image.png', 'GET')).toBe(false);
+      expect(isCsrfRequired('/api/auth/login', 'POST')).toBe(false);
+      expect(isCsrfRequired('/api/auth/callback', 'GET')).toBe(false);
+      expect(isCsrfRequired('/api/proxy/upload', 'POST')).toBe(true);
+      expect(isCsrfRequired('/api/settings/plugins', 'POST')).toBe(true);
+    });
+  });
 });

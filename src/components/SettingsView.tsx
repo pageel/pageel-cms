@@ -77,13 +77,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     const [isTogglingPlugin, setIsTogglingPlugin] = useState(false);
 
     // @para-doc [#csa-settings-view-cleanup]
+    // @para-doc [#csa-cms-sec-gap-client-header-settings]
     const handlePluginsEnabledToggle = async (enabled: boolean) => {
         setIsTogglingPlugin(true);
         try {
             const payload = { enabled };
+            const match = typeof document !== 'undefined' ? document.cookie.match(/(?:^|; )pageel_cms_csrf=([^;]*)/) : null;
+            const csrfToken = match && match[1] ? decodeURIComponent(match[1]) : (typeof document !== 'undefined' ? document.querySelector('meta[name="cms-csrf-token"]')?.getAttribute('content') || '' : '');
             const res = await fetch('/api/settings/plugins', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CMS-CSRF-Token': csrfToken
+                },
+                credentials: 'include',
                 body: JSON.stringify(payload)
             });
             if (res.ok) {
